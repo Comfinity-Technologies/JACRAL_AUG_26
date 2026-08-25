@@ -1,0 +1,26 @@
+# Jacral
+
+Jacral is an ecommerce platform for selling jackfruit and cereals.
+
+## Project Architecture
+
+The system consists of:
+
+- Customer-facing ecommerce website
+- Admin dashboard
+- Node.js backend API
+- PostgreSQL database
+- Payment gateway
+- Nodemailer-based email service
+- UTM campaign tracking
+- Analytics
+- Inventory management
+- Order management
+
+## Project Structure
+
+```text
+frontend/   - Customer website and admin interface
+backend/    - Node.js API and business logic
+database/   - Database migrations and seed data
+docs/       - Project documentation
