@@ -8,7 +8,7 @@ The system consists of:
 
 - Customer-facing ecommerce website
 - Admin dashboard
-- Node.js backend API
+- python - backend 
 - PostgreSQL database
 - Payment gateway
 - Nodemailer-based email service
