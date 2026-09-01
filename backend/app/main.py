@@ -1,10 +1,10 @@
 """
 JACRAL Backend - Main Application
 """
-#import logging
+import logging
 
-#from fastapi import FastAPI
-#from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from slowapi import Limiter, _rate_limit_exceeded_handler
