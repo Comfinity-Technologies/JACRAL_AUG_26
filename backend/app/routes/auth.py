@@ -65,7 +65,7 @@ def register(request: Request, data: RegisterRequest, background_tasks: Backgrou
         email=email,
         phone=data.phone,
         password_hash=pw_hash,
-        role="customer",
+        role="CUSTOMER",
         is_active=True,
     )
     db.add(user)

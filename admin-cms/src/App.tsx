@@ -3,17 +3,7 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
-import CustomerLayout from "./layouts/CustomerLayout";
-import HomePage from "./pages/customer/HomePage";
-import ShopPage from "./pages/customer/ShopPage";
-import ProductPage from "./pages/customer/ProductPage";
-import CartPage from "./pages/customer/CartPage";
-import CheckoutPage from "./pages/customer/CheckoutPage";
-import LoginPage from "./pages/customer/LoginPage";
-import RegisterPage from "./pages/customer/RegisterPage";
-import AccountPage from "./pages/customer/AccountPage";
-import OrderSuccessPage from "./pages/customer/OrderSuccessPage";
-import NotFoundPage from "./pages/customer/NotFoundPage";
+import { Navigate } from "react-router-dom";
 
 import AdminLayout from "./layouts/AdminLayout";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
@@ -25,31 +15,17 @@ import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminMFASetupPage from "./pages/admin/AdminMFASetupPage";
+import AdminExportsPage from "./pages/admin/AdminExportsPage";
 
 const router = createBrowserRouter([
-  // Customer routes
+  { path: "/login", element: <AdminLoginPage /> },
+  { path: "/admin/login", element: <Navigate to="/login" replace /> },
   {
-    element: <CustomerLayout />,
-    children: [
-      { path: "/", element: <HomePage /> },
-      { path: "/shop", element: <ShopPage /> },
-      { path: "/product/:id", element: <ProductPage /> },
-      { path: "/cart", element: <CartPage /> },
-      { path: "/checkout", element: <CheckoutPage /> },
-      { path: "/login", element: <LoginPage /> },
-      { path: "/register", element: <RegisterPage /> },
-      { path: "/account", element: <AccountPage /> },
-      { path: "/order-success", element: <OrderSuccessPage /> },
-      { path: "*", element: <NotFoundPage /> },
-    ],
-  },
-  // Admin routes
-  { path: "/admin/login", element: <AdminLoginPage /> },
-  {
-    path: "/admin",
+    path: "/",
     element: <AdminLayout />,
     children: [
-      { index: true, element: <DashboardPage /> },
+      { path: "dashboard", element: <DashboardPage /> },
+      { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: "orders", element: <AdminOrdersPage /> },
       { path: "products", element: <AdminProductsPage /> },
       { path: "categories", element: <AdminCategoriesPage /> },
@@ -57,6 +33,8 @@ const router = createBrowserRouter([
       { path: "users", element: <AdminUsersPage /> },
       { path: "coupons", element: <AdminCouponsPage /> },
       { path: "settings", element: <AdminMFASetupPage /> },
+      { path: "exports", element: <AdminExportsPage /> },
+      { path: "*", element: <Navigate to="/dashboard" replace /> },
     ],
   },
 ]);

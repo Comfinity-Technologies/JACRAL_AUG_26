@@ -41,7 +41,7 @@ export default function ProductPage() {
   const handleAddToCart = async () => {
     if (!product) return;
     try {
-      await apiClient.post("/api/v1/cart", { product_id: product.id, quantity: qty });
+      await apiClient.post("/api/v1/cart/items", { product_id: product.id, quantity: qty });
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2500);
     } catch (err: any) {

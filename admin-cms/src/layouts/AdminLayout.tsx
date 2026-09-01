@@ -28,30 +28,30 @@ const AdminLayout = () => {
   }
 
   if (!user || !ADMIN_ROLES.includes(user.role)) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   const navItems = [
-    { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
-    { name: "Orders", path: "/admin/orders", icon: ListOrdered },
-    { name: "Products", path: "/admin/products", icon: ShoppingBag },
-    { name: "Categories", path: "/admin/categories", icon: Tags },
-    { name: "Analytics", path: "/admin/analytics", icon: BarChart3 },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Orders", path: "/orders", icon: ListOrdered },
+    { name: "Products", path: "/products", icon: ShoppingBag },
+    { name: "Categories", path: "/categories", icon: Tags },
+    { name: "Analytics", path: "/analytics", icon: BarChart3 },
   ];
 
   // EMPLOYEE can see basic nav; ADMIN+ gets Users
   if (["ADMIN", "SUPER_ADMIN", "PRO_ADMIN"].includes(user.role)) {
-    navItems.push({ name: "Users", path: "/admin/users", icon: Users });
+    navItems.push({ name: "Users", path: "/users", icon: Users });
   }
 
-  // Only ADMIN, SUPER_ADMIN, PRO_ADMIN get Coupons
+  // Only ADMIN, SUPER_ADMIN, PRO_ADMIN get Coupons and Exports
   if (["ADMIN", "SUPER_ADMIN", "PRO_ADMIN"].includes(user.role)) {
-    navItems.push({ name: "Coupons", path: "/admin/coupons", icon: Tag });
+    navItems.push({ name: "Coupons", path: "/coupons", icon: Tag });
+    navItems.push({ name: "Exports", path: "/exports", icon: Tag });
   }
 
   const isActive = (path: string) => {
-    if (path === "/admin") return location.pathname === "/admin";
-    return location.pathname.startsWith(path);
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   const roleBadgeColor: Record<string, string> = {
@@ -110,9 +110,9 @@ const AdminLayout = () => {
           
           <div className="pt-4 mt-4 border-t border-white/10">
             <Link
-              to="/admin/settings"
+              to="/settings"
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-sm font-semibold ${
-                isActive("/admin/settings")
+                isActive("/settings")
                   ? "bg-[#3B6E4C] text-white shadow-lg shadow-[#3B6E4C]/20 translate-x-1"
                   : "text-white/70 hover:bg-white/10 hover:text-white"
               }`}

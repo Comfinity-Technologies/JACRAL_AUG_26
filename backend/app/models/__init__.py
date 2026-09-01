@@ -10,7 +10,6 @@ from app.models.address import Address
 from app.models.coupon import Coupon
 from app.models.order import Order, OrderItem
 from app.models.payment import Payment
-from app.models.voting import VotingQuestion, VotingOption, VotingResponse
 from app.models.utm_visit import UtmVisit
 from app.models.audit_log import AuditLog
 
@@ -26,9 +25,6 @@ __all__ = [
     "Order",
     "OrderItem",
     "Payment",
-    "VotingQuestion",
-    "VotingOption",
-    "VotingResponse",
     "UtmVisit",
     "AuditLog",
 ]

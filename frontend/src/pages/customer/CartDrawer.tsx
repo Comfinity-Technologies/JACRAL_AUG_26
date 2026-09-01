@@ -138,7 +138,7 @@ export default function CartDrawer({
                     </h3>
 
                     <p className="mt-1 text-sm text-[#718078]">
-                      ₹{item.price}
+                      ₹{item.unit_price}
                     </p>
 
                     <div className="mt-3 flex items-center justify-between">

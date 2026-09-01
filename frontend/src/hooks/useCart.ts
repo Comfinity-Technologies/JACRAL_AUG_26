@@ -1,145 +1,152 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { apiClient } from "../api/client";
+import { useAuth } from "./useAuth";
 
-export type CartProduct = {
+export type CartItem = {
   id: number;
-  name: string;
-  category: string;
-  price: number;
+  product_id: number;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  // Merged fields for frontend rendering
+  name?: string;
+  category?: string;
   image?: string;
 };
 
-export type CartItem = CartProduct & {
-  quantity: number;
+export type CartState = {
+  id?: number;
+  items: CartItem[];
+  total: number;
 };
 
-const CART_STORAGE_KEY = "jacral_cart";
-
 export function useCart() {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY);
+  const { user } = useAuth();
+  const [cart, setCart] = useState<CartState>({ items: [], total: 0 });
+  const [loading, setLoading] = useState(false);
 
-      if (!stored) {
-        return [];
+  // Helper to fetch product details since backend cart only returns product_id
+  const enrichCartItems = async (items: CartItem[]) => {
+    const enriched = [...items];
+    for (let i = 0; i < enriched.length; i++) {
+      try {
+        const res = await apiClient.get(`/api/v1/products/${enriched[i].product_id}`);
+        const p = res.data;
+        enriched[i].name = p.name;
+        enriched[i].category = typeof p.category === "string" ? p.category : p.category?.name;
+        enriched[i].image = p.image_url;
+      } catch (err) {
+        console.error("Failed to fetch product for cart item", err);
       }
-
-      return JSON.parse(stored);
-    } catch {
-      return [];
     }
-  });
+    return enriched;
+  };
+
+  const fetchCart = useCallback(async () => {
+    if (!user) {
+      setCart({ items: [], total: 0 });
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await apiClient.get("/api/v1/cart");
+      const enrichedItems = await enrichCartItems(res.data.items || []);
+      setCart({
+        id: res.data.id,
+        items: enrichedItems,
+        total: parseFloat(res.data.total),
+      });
+    } catch (err) {
+      console.error("Error fetching cart", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    localStorage.setItem(
-      CART_STORAGE_KEY,
-      JSON.stringify(items)
-    );
-  }, [items]);
+    fetchCart();
+  }, [fetchCart]);
 
-  const addToCart = (product: CartProduct) => {
-    setItems((currentItems) => {
-      const existingItem = currentItems.find(
-        (item) => item.id === product.id
-      );
-
-      if (existingItem) {
-        return currentItems.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-              }
-            : item
-        );
-      }
-
-      return [
-        ...currentItems,
-        {
-          ...product,
-          quantity: 1,
-        },
-      ];
-    });
+  const addToCart = async (productId: number, quantity: number = 1) => {
+    if (!user) {
+      // If not logged in, they can't use the backend cart. 
+      // The flow requires logging in first according to the reqs.
+      window.location.href = "/login";
+      return;
+    }
+    try {
+      await apiClient.post("/api/v1/cart/items", { product_id: productId, quantity });
+      await fetchCart();
+    } catch (err) {
+      console.error("Add to cart failed", err);
+      throw err;
+    }
   };
 
-  const increaseQuantity = (productId: number) => {
-    setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === productId
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-            }
-          : item
-      )
-    );
+  const increaseQuantity = async (itemId: number) => {
+    const item = cart.items.find((i) => i.id === itemId);
+    if (!item) return;
+    try {
+      await apiClient.patch(`/api/v1/cart/items/${itemId}`, { quantity: item.quantity + 1 });
+      await fetchCart();
+    } catch (err) {
+      console.error("Increase qty failed", err);
+    }
   };
 
-  const decreaseQuantity = (productId: number) => {
-    setItems((currentItems) =>
-      currentItems
-        .map((item) =>
-          item.id === productId
-            ? {
-                ...item,
-                quantity: item.quantity - 1,
-              }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
+  const decreaseQuantity = async (itemId: number) => {
+    const item = cart.items.find((i) => i.id === itemId);
+    if (!item) return;
+    if (item.quantity <= 1) {
+      return removeFromCart(itemId);
+    }
+    try {
+      await apiClient.patch(`/api/v1/cart/items/${itemId}`, { quantity: item.quantity - 1 });
+      await fetchCart();
+    } catch (err) {
+      console.error("Decrease qty failed", err);
+    }
   };
 
-  const removeFromCart = (productId: number) => {
-    setItems((currentItems) =>
-      currentItems.filter(
-        (item) => item.id !== productId
-      )
-    );
+  const removeFromCart = async (itemId: number) => {
+    try {
+      await apiClient.delete(`/api/v1/cart/items/${itemId}`);
+      await fetchCart();
+    } catch (err) {
+      console.error("Remove item failed", err);
+    }
   };
 
-  const clearCart = () => {
-    setItems([]);
+  const clearCart = async () => {
+    try {
+      await apiClient.delete("/api/v1/cart");
+      await fetchCart();
+    } catch (err) {
+      console.error("Clear cart failed", err);
+    }
   };
 
   const itemCount = useMemo(
-    () =>
-      items.reduce(
-        (total, item) => total + item.quantity,
-        0
-      ),
-    [items]
+    () => cart.items.reduce((total, item) => total + item.quantity, 0),
+    [cart.items]
   );
 
-  const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (total, item) =>
-          total + item.price * item.quantity,
-        0
-      ),
-    [items]
-  );
-
-  const delivery = subtotal === 0
-    ? 0
-    : subtotal >= 500
-      ? 0
-      : 50;
-
+  const subtotal = cart.total;
+  const delivery = subtotal === 0 ? 0 : subtotal >= 500 ? 0 : 50;
   const total = subtotal + delivery;
 
   return {
-    items,
+    items: cart.items,
     itemCount,
     subtotal,
     delivery,
     total,
+    loading,
     addToCart,
     increaseQuantity,
     decreaseQuantity,
     removeFromCart,
     clearCart,
+    refreshCart: fetchCart,
   };
 }

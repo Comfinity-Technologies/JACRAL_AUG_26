@@ -53,14 +53,7 @@ export default function ProductGrid({ products, cols = 3 }: ProductGridProps) {
           key={product.id} 
           product={product} 
           onAddToCart={() => {
-            const catName = typeof product.category === "string" ? product.category : product.category?.name || "Uncategorized";
-            addToCart({
-              id: product.id,
-              name: product.name,
-              category: catName,
-              price: typeof product.price === "string" ? parseFloat(product.price) : product.price,
-              image: product.image_url,
-            });
+            addToCart(product.id, 1);
           }}
         />
       ))}

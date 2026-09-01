@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 // Admin roles in JACRAL system
-const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "PRO_ADMIN", "EMPLOYEE"];
+const ADMIN_ROLES = ["PRO_ADMIN"];
 
 const AdminLayout = () => {
   const { user, loading, logout } = useAuth();
@@ -28,30 +28,23 @@ const AdminLayout = () => {
   }
 
   if (!user || !ADMIN_ROLES.includes(user.role)) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   const navItems = [
-    { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
-    { name: "Orders", path: "/admin/orders", icon: ListOrdered },
-    { name: "Products", path: "/admin/products", icon: ShoppingBag },
-    { name: "Categories", path: "/admin/categories", icon: Tags },
-    { name: "Analytics", path: "/admin/analytics", icon: BarChart3 },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Clients", path: "/clients", icon: Users },
+    { name: "Integrations", path: "/integrations", icon: Tags },
+    { name: "Services", path: "/services", icon: ListOrdered },
+    { name: "Security", path: "/security", icon: Tag },
+    { name: "Audit Logs", path: "/audit-logs", icon: ShoppingBag },
+    { name: "Analytics", path: "/analytics", icon: BarChart3 },
   ];
 
-  // EMPLOYEE can see basic nav; ADMIN+ gets Users
-  if (["ADMIN", "SUPER_ADMIN", "PRO_ADMIN"].includes(user.role)) {
-    navItems.push({ name: "Users", path: "/admin/users", icon: Users });
-  }
 
-  // Only ADMIN, SUPER_ADMIN, PRO_ADMIN get Coupons
-  if (["ADMIN", "SUPER_ADMIN", "PRO_ADMIN"].includes(user.role)) {
-    navItems.push({ name: "Coupons", path: "/admin/coupons", icon: Tag });
-  }
 
   const isActive = (path: string) => {
-    if (path === "/admin") return location.pathname === "/admin";
-    return location.pathname.startsWith(path);
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   const roleBadgeColor: Record<string, string> = {
@@ -110,15 +103,15 @@ const AdminLayout = () => {
           
           <div className="pt-4 mt-4 border-t border-white/10">
             <Link
-              to="/admin/settings"
+              to="/settings"
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-sm font-semibold ${
-                isActive("/admin/settings")
+                isActive("/settings")
                   ? "bg-[#3B6E4C] text-white shadow-lg shadow-[#3B6E4C]/20 translate-x-1"
                   : "text-white/70 hover:bg-white/10 hover:text-white"
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              <span>Settings & MFA</span>
+              <span>Platform Settings</span>
             </Link>
           </div>
         </nav>

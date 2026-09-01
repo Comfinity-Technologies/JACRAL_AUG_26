@@ -63,5 +63,4 @@ class User(Base):
         "Address", back_populates="user", cascade="all, delete-orphan"
     )
     cart = relationship("Cart", back_populates="user", uselist=False)
-    voting_responses = relationship("VotingResponse", back_populates="user")
     audit_logs = relationship("AuditLog", back_populates="user")

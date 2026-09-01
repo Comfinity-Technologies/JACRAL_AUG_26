@@ -120,7 +120,7 @@ export default function CartPage() {
                       </h3>
 
                       <p className="mt-2 text-sm font-semibold text-[#3B6E4C]">
-                        ₹{item.price}
+                        ₹{item.unit_price}
                       </p>
 
                     </div>
@@ -162,7 +162,7 @@ export default function CartPage() {
                     <div className="text-right">
 
                       <p className="font-bold text-lg text-[#2C221E]">
-                        ₹{item.price * item.quantity}
+                        ₹{item.subtotal}
                       </p>
 
                       <button

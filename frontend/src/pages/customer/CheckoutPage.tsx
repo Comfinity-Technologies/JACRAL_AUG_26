@@ -344,7 +344,7 @@ export default function CheckoutPage() {
                   </span>
 
                   <span>
-                    ₹{item.price * item.quantity}
+                    ₹{item.subtotal}
                   </span>
 
                 </div>

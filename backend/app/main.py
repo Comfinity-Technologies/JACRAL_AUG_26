@@ -1,10 +1,10 @@
 """
 JACRAL Backend - Main Application
 """
-import logging
+#import logging
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+#from fastapi import FastAPI
+#from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -33,6 +33,7 @@ from app.routes.admin.categories import router as admin_categories_router
 from app.routes.admin.orders import router as admin_orders_router
 from app.routes.admin.coupons import router as admin_coupons_router
 from app.routes.admin.analytics import router as admin_analytics_router
+from app.routes.admin.exports import router as admin_exports_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -116,3 +117,4 @@ app.include_router(admin_categories_router, prefix="/api/v1/admin/categories")
 app.include_router(admin_orders_router, prefix="/api/v1/admin/orders")
 app.include_router(admin_coupons_router, prefix="/api/v1/admin/coupons")
 app.include_router(admin_analytics_router, prefix="/api/v1/admin/analytics")
+app.include_router(admin_exports_router, prefix="/api/v1/admin/exports")
