@@ -1,12 +1,11 @@
-<<<<<<< HEAD
-.env
-venv/
-__pycache__/
-*.pyc
-=======
 # Dependencies
 node_modules/
 .pnpm-store/
+
+# Python
+venv/
+__pycache__/
+*.pyc
 
 # Environment variables
 .env
@@ -37,4 +36,3 @@ coverage/
 # Temporary files
 tmp/
 temp/
->>>>>>> origin/main

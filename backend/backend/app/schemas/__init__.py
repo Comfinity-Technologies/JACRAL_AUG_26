@@ -1,1 +1,0 @@
-"""JACRAL schemas package."""
