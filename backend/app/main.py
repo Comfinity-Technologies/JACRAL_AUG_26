@@ -1,9 +1,9 @@
 """
 JACRAL Backend - Main Application
 """
-import logging
+#import logging
 
-from fastapi import FastAPI
+#from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
