@@ -14,7 +14,7 @@ from app.database import get_db
 from app.models.category import Category
 from app.models.user import User
 from app.schemas.category import CategoryCreate, CategoryOut, CategoryUpdate
-from app.security.permissions import require_manager, require_staff
+from app.security.permissions import require_admin
 from app.services import audit_service
 
 router = APIRouter(tags=["Admin – Categories"])
@@ -35,12 +35,12 @@ def _unique_slug(db: Session, name: str, exclude_id: int | None = None) -> str:
 
 
 @router.get("", response_model=list[CategoryOut], summary="List all categories (admin)")
-def list_categories(_staff: User = Depends(require_staff), db: Session = Depends(get_db)):
+def list_categories(_admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     return db.query(Category).order_by(Category.name).all()
 
 
 @router.post("", response_model=CategoryOut, status_code=status.HTTP_201_CREATED, summary="Create category")
-def create_category(data: CategoryCreate, admin: User = Depends(require_manager), db: Session = Depends(get_db)):
+def create_category(data: CategoryCreate, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     slug = _unique_slug(db, data.name)
     cat = Category(**data.model_dump(), slug=slug)
     db.add(cat)
@@ -55,7 +55,7 @@ def create_category(data: CategoryCreate, admin: User = Depends(require_manager)
 def update_category(
     category_id: int,
     data: CategoryUpdate,
-    admin: User = Depends(require_manager),
+    admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     cat = db.query(Category).filter(Category.id == category_id).first()
@@ -74,12 +74,33 @@ def update_category(
 
 
 @router.delete("/{category_id}", summary="Deactivate a category")
-def delete_category(category_id: int, admin: User = Depends(require_manager), db: Session = Depends(get_db)):
+def delete_category(category_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     cat = db.query(Category).filter(Category.id == category_id).first()
     if not cat:
         raise HTTPException(status_code=404, detail="Category not found.")
     cat.is_active = False
     db.commit()
-    audit_service.log_action(db, "CATEGORY_DELETED", admin.id, "category", str(category_id))
+    db.refresh(cat)
+    audit_service.log_action(db, "CATEGORY_DEACTIVATED", admin.id, "category", str(category_id))
     db.commit()
-    return {"success": True, "message": "Category deactivated."}
+    return {"success": True, "message": "Category deactivated.", "id": category_id, "is_active": False}
+
+
+@router.patch("/{category_id}/status", response_model=CategoryOut, summary="Toggle category active status")
+def toggle_category_status(
+    category_id: int,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Toggle a category between active and inactive."""
+    cat = db.query(Category).filter(Category.id == category_id).first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found.")
+    cat.is_active = not cat.is_active
+    db.commit()
+    db.refresh(cat)
+    action = "CATEGORY_ACTIVATED" if cat.is_active else "CATEGORY_DEACTIVATED"
+    audit_service.log_action(db, action, admin.id, "category", str(category_id))
+    db.commit()
+    return cat
+

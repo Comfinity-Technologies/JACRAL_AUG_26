@@ -7,7 +7,7 @@ GET  /api/v1/orders/{id}    CUSTOMER (own order detail)
 """
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -32,6 +32,7 @@ router = APIRouter(tags=["Orders"])
 )
 def create_order(
     data: OrderCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_customer),
     db: Session = Depends(get_db),
 ):
@@ -113,6 +114,7 @@ def create_order(
 
     # Non-blocking email
     email_service.send_order_confirmation(
+        background_tasks=background_tasks,
         to=current_user.email,
         order_id=order.id,
         total=str(final_total),

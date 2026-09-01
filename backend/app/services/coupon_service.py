@@ -81,5 +81,7 @@ def validate_coupon(
 
 def increment_coupon_usage(db: Session, coupon: Coupon) -> None:
     """Atomically increment the coupon used_count within a transaction."""
-    coupon.used_count += 1
-    db.flush()
+    locked_coupon = db.query(Coupon).filter(Coupon.id == coupon.id).with_for_update().first()
+    if locked_coupon:
+        locked_coupon.used_count += 1
+        db.flush()

@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -35,18 +36,18 @@ class Order(Base):
 
     # pending | confirmed | processing | packed | shipped | out_for_delivery | delivered | cancelled
     status: Mapped[str] = mapped_column(
-        String(30), default="pending", nullable=False, index=True
+        String(30), default="pending", server_default=text("'pending'"), nullable=False, index=True
     )
 
     # pending | paid | failed | refunded
     payment_status: Mapped[str] = mapped_column(
-        String(30), default="pending", nullable=False
+        String(30), default="pending", server_default=text("'pending'"), nullable=False
     )
 
     total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
     discount_amount: Mapped[Decimal] = mapped_column(
-        Numeric(10, 2), default=Decimal("0.00"), nullable=False
+        Numeric(10, 2), default=Decimal("0.00"), server_default=text("0.00"), nullable=False
     )
 
     coupon_id: Mapped[int | None] = mapped_column(

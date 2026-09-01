@@ -14,6 +14,7 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -53,7 +54,7 @@ class Product(Base):
         Numeric(10, 2), nullable=True
     )
 
-    stock: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    stock: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"), nullable=False)
 
     weight: Mapped[Decimal | None] = mapped_column(Numeric(8, 3), nullable=True)
 
@@ -63,9 +64,9 @@ class Product(Base):
 
     badge: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
-    featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    featured: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"), nullable=False)
 
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"), nullable=False, index=True)
 
     created_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True

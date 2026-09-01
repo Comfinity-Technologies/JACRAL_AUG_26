@@ -30,4 +30,13 @@ class UserStatusUpdate(BaseModel):
 
 
 class UserRoleUpdate(BaseModel):
-    role: str = Field(pattern="^(customer|staff|manager|admin)$")
+    role: str = Field(pattern="^(CUSTOMER|EMPLOYEE|ADMIN|SUPER_ADMIN|PRO_ADMIN)$")
+
+
+class UserCreate(BaseModel):
+    """Used by SUPER_ADMIN to create new staff/admin accounts."""
+    name: str = Field(min_length=2, max_length=100)
+    email: EmailStr
+    password: str = Field(min_length=8)
+    role: str = Field(pattern="^(EMPLOYEE|ADMIN|PRO_ADMIN|SUPER_ADMIN)$")
+    phone: Optional[str] = Field(default=None, max_length=20)

@@ -8,7 +8,7 @@ GET  /api/v1/payments/order/{order_id}      CUSTOMER
 import json
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -17,7 +17,7 @@ from app.models.payment import Payment
 from app.models.user import User
 from app.schemas.payment import CheckoutRequest, CheckoutResponse, PaymentOut
 from app.security.permissions import require_customer
-from app.services import email_service, payment_service
+from app.services import email_service, payment_service, shipping_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Payments"])
@@ -87,7 +87,7 @@ def checkout(
     status_code=status.HTTP_200_OK,
     summary="Razorpay payment webhook (idempotent)",
 )
-async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
+async def razorpay_webhook(request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     body = await request.body()
     signature = request.headers.get("X-Razorpay-Signature", "")
 
@@ -110,22 +110,18 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
         if not provider_payment_id:
             return {"status": "ignored"}
 
-        # Idempotency: check if already processed
-        existing = db.query(Payment).filter(
-            Payment.provider_payment_id == provider_payment_id
-        ).first()
-
-        if existing and existing.status == "paid":
-            logger.info("Webhook already processed for payment %s", provider_payment_id)
-            return {"status": "already_processed"}
-
+        # Row-level lock to prevent concurrent webhook processing race conditions
         payment = db.query(Payment).filter(
             Payment.provider_order_id == provider_order_id
-        ).first()
+        ).with_for_update().first()
 
         if not payment:
             logger.error("No payment found for Razorpay order %s", provider_order_id)
             return {"status": "payment_not_found"}
+
+        if payment.status == "paid":
+            logger.info("Webhook already processed for payment %s", provider_payment_id)
+            return {"status": "already_processed"}
 
         payment.provider_payment_id = provider_payment_id
         payment.status = "paid"
@@ -139,11 +135,13 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
             db.commit()
 
             email_service.send_order_confirmation(
+                background_tasks=background_tasks,
                 to=order.shipping_email,
                 order_id=order.id,
                 total=str(order.total_amount),
                 customer_name=order.shipping_name,
             )
+            background_tasks.add_task(shipping_service.create_shipment_background, order.id)
 
     return {"status": "ok"}
 

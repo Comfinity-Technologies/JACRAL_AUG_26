@@ -5,10 +5,16 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.database import Base, engine
 import app.models  # This ensures all models are imported before metadata creation (if used)
+from app.services.audit_service import client_ip_var
 
 from app.routes.health import router as health_router
 from app.routes.auth import router as auth_router
@@ -31,11 +37,36 @@ from app.routes.admin.analytics import router as admin_analytics_router
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from app.seed import seed_admin_users
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     redirect_slashes=False,
 )
+
+@app.on_event("startup")
+def on_startup():
+    try:
+        seed_admin_users()
+    except Exception as e:
+        logger.error(f"Startup seed error: {e}")
+
+
+# ---------------------------------------------------------
+# Rate Limiting & Context Variables
+# ---------------------------------------------------------
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+from fastapi import Request
+
+@app.middleware("http")
+async def add_context_vars(request: Request, call_next):
+    ip = request.client.host if request.client else None
+    client_ip_var.set(ip)
+    return await call_next(request)
 
 # ---------------------------------------------------------
 # CORS
@@ -56,6 +87,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------------------------------------
+# Static Files Setup (for uploaded product images)
+# ---------------------------------------------------------
+static_dir = Path(__file__).resolve().parent.parent / "static"
+static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # ---------------------------------------------------------
 # API routes

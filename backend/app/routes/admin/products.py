@@ -1,13 +1,19 @@
 """
 JACRAL – Admin: Product management.
 
-POST   /api/v1/admin/products              MANAGER+
-GET    /api/v1/admin/products              STAFF+
-PATCH  /api/v1/admin/products/{id}         MANAGER+
-DELETE /api/v1/admin/products/{id}         MANAGER+
-PATCH  /api/v1/admin/products/{id}/status  MANAGER+
+POST   /api/v1/admin/products              ADMIN+
+GET    /api/v1/admin/products              EMPLOYEE+
+PATCH  /api/v1/admin/products/{id}         ADMIN+
+DELETE /api/v1/admin/products/{id}         ADMIN+
+PATCH  /api/v1/admin/products/{id}/status  ADMIN+
+POST   /api/v1/admin/products/{id}/image   ADMIN+  ← image upload
 """
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import os
+import uuid
+import shutil
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 from slugify import slugify
 
@@ -15,11 +21,18 @@ from app.database import get_db
 from app.models.product import Product
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductOut, ProductStatusUpdate, ProductUpdate
-from app.security.permissions import require_manager, require_staff
+from app.security.permissions import require_admin, require_employee
 from app.services import audit_service
 from app.utils.pagination import PaginatedResponse, PaginationParams
 
 router = APIRouter(tags=["Admin – Products"])
+
+# Directory for uploaded product images – relative to backend root
+UPLOAD_DIR = Path(__file__).resolve().parents[3] / "static" / "products"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
 def _unique_slug(db: Session, name: str, exclude_id: int | None = None) -> str:
@@ -44,7 +57,7 @@ def list_products_admin(
     category_id: int = Query(default=None),
     is_active: bool = Query(default=None),
     db: Session = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    _admin: User = Depends(require_employee),
 ):
     pagination = PaginationParams(page=page, limit=limit)
     q = db.query(Product)
@@ -63,7 +76,7 @@ def list_products_admin(
 def create_product(
     data: ProductCreate,
     db: Session = Depends(get_db),
-    admin: User = Depends(require_manager),
+    admin: User = Depends(require_admin),
 ):
     slug = _unique_slug(db, data.name)
     product = Product(**data.model_dump(), slug=slug, created_by=admin.id, updated_by=admin.id)
@@ -80,7 +93,7 @@ def update_product(
     product_id: int,
     data: ProductUpdate,
     db: Session = Depends(get_db),
-    admin: User = Depends(require_manager),
+    admin: User = Depends(require_admin),
 ):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
@@ -103,7 +116,7 @@ def update_product_status(
     product_id: int,
     data: ProductStatusUpdate,
     db: Session = Depends(get_db),
-    admin: User = Depends(require_manager),
+    admin: User = Depends(require_admin),
 ):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
@@ -117,11 +130,57 @@ def update_product_status(
     return product
 
 
+@router.post("/{product_id}/image", response_model=ProductOut, summary="Upload product image")
+async def upload_product_image(
+    product_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Accept a JPEG/PNG/WebP image (max 5 MB) and store it under /static/products/."""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found.")
+
+    if file.content_type not in ALLOWED_MIME:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{file.content_type}'. Allowed: JPEG, PNG, WebP, GIF.",
+        )
+
+    # Read content and check size
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large. Max allowed size is 5 MB.")
+
+    # Save with unique filename
+    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
+    filename = f"{product_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    dest = UPLOAD_DIR / filename
+
+    with open(dest, "wb") as f:
+        f.write(contents)
+
+    # Delete old image file if it was locally stored
+    if product.image_url and product.image_url.startswith("/static/products/"):
+        old_path = Path(__file__).resolve().parents[3] / product.image_url.lstrip("/")
+        if old_path.exists():
+            old_path.unlink(missing_ok=True)
+
+    product.image_url = f"/static/products/{filename}"
+    product.updated_by = admin.id
+    db.commit()
+    db.refresh(product)
+    audit_service.log_action(db, "PRODUCT_IMAGE_UPLOADED", admin.id, "product", str(product_id), {"filename": filename})
+    db.commit()
+    return product
+
+
 @router.delete("/{product_id}", summary="Soft-delete a product")
 def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
-    admin: User = Depends(require_manager),
+    admin: User = Depends(require_admin),
 ):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:

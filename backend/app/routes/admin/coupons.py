@@ -8,14 +8,14 @@ from app.database import get_db
 from app.models.coupon import Coupon
 from app.models.user import User
 from app.schemas.coupon import CouponCreate, CouponOut, CouponUpdate
-from app.security.permissions import require_admin, require_manager
+from app.security.permissions import require_admin
 from app.services import audit_service
 
 router = APIRouter(tags=["Admin – Coupons"])
 
 
 @router.get("", response_model=list[CouponOut], summary="List all coupons")
-def list_coupons(_: User = Depends(require_manager), db: Session = Depends(get_db)):
+def list_coupons(_: User = Depends(require_admin), db: Session = Depends(get_db)):
     return db.query(Coupon).order_by(Coupon.created_at.desc()).all()
 
 

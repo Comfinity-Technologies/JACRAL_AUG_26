@@ -3,6 +3,8 @@ JACRAL – Audit logging service.
 """
 import json
 import logging
+import contextvars
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -10,6 +12,7 @@ from app.models.audit_log import AuditLog
 
 logger = logging.getLogger(__name__)
 
+client_ip_var: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("client_ip", default=None)
 
 def log_action(
     db: Session,
@@ -24,6 +27,9 @@ def log_action(
     Record an admin action in the audit_logs table.
     Silently swallows errors so audit failures don't disrupt business logic.
     """
+    if ip_address is None:
+        ip_address = client_ip_var.get()
+        
     try:
         entry = AuditLog(
             user_id=user_id,

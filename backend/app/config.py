@@ -33,6 +33,19 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # ------------------------------------------------------------------
+    # Admin Seed Credentials
+    # ------------------------------------------------------------------
+    ADMIN_EMAIL: str = "admin@jacral.com"
+    ADMIN_PASSWORD: str = "AdminPassword123!"
+
+    SUPER_ADMIN_EMAIL: str = "superadmin@jacral.com"
+    SUPER_ADMIN_PASSWORD: str = "SuperAdminPassword123!"
+
+    PRO_ADMIN_EMAIL: str = "proadmin@jacral.com"
+    PRO_ADMIN_PASSWORD: str = "ProAdminPassword123!"
+
+
+    # ------------------------------------------------------------------
     # Payment – Razorpay
     # ------------------------------------------------------------------
     PAYMENT_PROVIDER: str = "razorpay"

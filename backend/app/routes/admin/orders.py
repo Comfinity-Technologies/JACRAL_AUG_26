@@ -5,15 +5,18 @@ GET   /api/v1/admin/orders              STAFF+
 GET   /api/v1/admin/orders/{id}         STAFF+
 PATCH /api/v1/admin/orders/{id}/status  STAFF+
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from datetime import timedelta
+from sqlalchemy import func
 from app.database import get_db
 from app.models.order import Order
+from app.models.product import Product
 from app.models.user import User
 from app.schemas.order import OrderOut, OrderStatusUpdate
-from app.security.permissions import require_staff
-from app.services import audit_service, email_service
+from app.security.permissions import require_employee
+from app.services import audit_service, email_service, shipping_service
 from app.utils.pagination import PaginatedResponse, PaginationParams
 
 router = APIRouter(tags=["Admin – Orders"])
@@ -26,7 +29,7 @@ def list_orders_admin(
     status_filter: str = Query(default=None, alias="status"),
     payment_status: str = Query(default=None),
     db: Session = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    _staff: User = Depends(require_employee),
 ):
     pagination = PaginationParams(page=page, limit=limit)
     q = db.query(Order)
@@ -40,7 +43,7 @@ def list_orders_admin(
 
 
 @router.get("/{order_id}", response_model=OrderOut, summary="Get any order (admin)")
-def get_order_admin(order_id: int, db: Session = Depends(get_db), _staff: User = Depends(require_staff)):
+def get_order_admin(order_id: int, db: Session = Depends(get_db), _staff: User = Depends(require_employee)):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found.")
@@ -51,15 +54,40 @@ def get_order_admin(order_id: int, db: Session = Depends(get_db), _staff: User =
 def update_order_status(
     order_id: int,
     data: OrderStatusUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    staff: User = Depends(require_staff),
+    staff: User = Depends(require_employee),
 ):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found.")
 
     old_status = order.status
+    
+    # Enforce transitions
+    VALID_TRANSITIONS = {
+        "pending": ["confirmed", "cancelled"],
+        "confirmed": ["processing", "cancelled"],
+        "processing": ["packed", "cancelled"],
+        "packed": ["shipped", "cancelled"],
+        "shipped": ["out_for_delivery", "cancelled"],
+        "out_for_delivery": ["delivered", "cancelled"],
+        "delivered": [], # Terminal state
+        "cancelled": [], # Terminal state
+    }
+    
+    if data.status not in VALID_TRANSITIONS.get(old_status, []):
+        raise HTTPException(status_code=400, detail=f"Invalid transition from {old_status} to {data.status}")
+
     order.status = data.status
+    
+    # Restock inventory on cancellation
+    if data.status == "cancelled" and old_status != "cancelled":
+        for item in order.items:
+            product = db.query(Product).filter(Product.id == item.product_id).with_for_update().first()
+            if product:
+                product.stock += item.quantity
+
     db.commit()
     db.refresh(order)
 
@@ -70,13 +98,44 @@ def update_order_status(
     db.commit()
 
     # Send email notifications for key status changes
-    if data.status == "confirmed":
-        email_service.send_order_confirmed(order.shipping_email, order.id)
-    elif data.status == "shipped":
-        email_service.send_order_shipped(order.shipping_email, order.id, order.shipment_id)
-    elif data.status == "delivered":
-        email_service.send_order_delivered(order.shipping_email, order.id)
-    elif data.status == "cancelled":
-        email_service.send_order_cancelled(order.shipping_email, order.id)
+    if data.status == "confirmed" and old_status != "confirmed":
+        email_service.send_order_confirmed(background_tasks, order.shipping_email, order.id)
+        background_tasks.add_task(shipping_service.create_shipment_background, order.id)
+    elif data.status == "shipped" and old_status != "shipped":
+        email_service.send_order_shipped(background_tasks, order.shipping_email, order.id, order.shipment_id)
+    elif data.status == "delivered" and old_status != "delivered":
+        email_service.send_order_delivered(background_tasks, order.shipping_email, order.id)
+    elif data.status == "cancelled" and old_status != "cancelled":
+        email_service.send_order_cancelled(background_tasks, order.shipping_email, order.id)
 
     return order
+
+
+@router.post("/expire-abandoned", summary="Cancel pending orders older than 24h")
+def expire_abandoned_orders(
+    db: Session = Depends(get_db),
+    staff: User = Depends(require_employee),
+):
+    # Find orders pending for more than 24 hours
+    cutoff = func.now() - timedelta(hours=24)
+    orders = db.query(Order).filter(
+        Order.status == "pending",
+        Order.created_at < cutoff
+    ).with_for_update().all()
+    
+    cancelled_count = 0
+    for order in orders:
+        order.status = "cancelled"
+        for item in order.items:
+            product = db.query(Product).filter(Product.id == item.product_id).with_for_update().first()
+            if product:
+                product.stock += item.quantity
+                
+        audit_service.log_action(
+            db, "ORDER_EXPIRED", staff.id, "order", str(order.id),
+            {"old_status": "pending", "new_status": "cancelled", "reason": "abandoned"}
+        )
+        cancelled_count += 1
+        
+    db.commit()
+    return {"message": f"Expired {cancelled_count} abandoned orders"}

@@ -1,10 +1,10 @@
 """
 JACRAL – Role-based permission dependencies.
 
-Hierarchy: customer < staff < manager < admin
+Hierarchy: CUSTOMER < EMPLOYEE < ADMIN < SUPER_ADMIN < PRO_ADMIN
 
 Usage in route:
-    current_user: User = Depends(require_manager)
+    current_user: User = Depends(require_admin)
 """
 from fastapi import Depends, HTTPException, status
 
@@ -12,10 +12,11 @@ from app.models.user import User
 from app.security.dependencies import get_current_user
 
 _ROLE_LEVEL = {
-    "customer": 0,
-    "staff": 1,
-    "manager": 2,
-    "admin": 3,
+    "CUSTOMER": 0,
+    "EMPLOYEE": 1,
+    "ADMIN": 2,
+    "SUPER_ADMIN": 3,
+    "PRO_ADMIN": 4,
 }
 
 
@@ -37,7 +38,8 @@ def _require_role(minimum_role: str):
 
 
 # Convenience aliases
-require_customer = _require_role("customer")
-require_staff = _require_role("staff")
-require_manager = _require_role("manager")
-require_admin = _require_role("admin")
+require_customer = _require_role("CUSTOMER")
+require_employee = _require_role("EMPLOYEE")
+require_admin = _require_role("ADMIN")
+require_super_admin = _require_role("SUPER_ADMIN")
+require_pro_admin = _require_role("PRO_ADMIN")

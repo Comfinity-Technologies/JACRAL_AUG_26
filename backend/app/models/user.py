@@ -4,7 +4,7 @@ Represents customers and all admin staff roles.
 """
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy import Boolean, DateTime, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -28,15 +28,19 @@ class User(Base):
 
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    # customer | staff | manager | admin
+    # CUSTOMER | EMPLOYEE | ADMIN | SUPER_ADMIN | PRO_ADMIN
     role: Mapped[str] = mapped_column(
         String(30),
-        default="customer",
+        default="CUSTOMER",
         nullable=False,
         index=True,
     )
 
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"), nullable=False)
+
+    mfa_secret: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"), nullable=False)
+    mfa_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
