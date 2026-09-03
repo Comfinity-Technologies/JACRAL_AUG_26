@@ -12,6 +12,7 @@ from app.models.order import Order, OrderItem
 from app.models.payment import Payment
 from app.models.utm_visit import UtmVisit
 from app.models.audit_log import AuditLog
+from app.models.policy import Policy
 
 
 __all__ = [
@@ -27,4 +28,5 @@ __all__ = [
     "Payment",
     "UtmVisit",
     "AuditLog",
+    "Policy",
 ]

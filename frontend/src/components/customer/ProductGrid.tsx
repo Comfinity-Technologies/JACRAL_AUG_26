@@ -23,17 +23,17 @@ export default function ProductGrid({ products, cols = 3 }: ProductGridProps) {
 
   if (!products || products.length === 0) {
     return (
-      <div className="rounded-2xl border border-[#E5E0D5] bg-white p-16 text-center">
+      <div className="natura-card p-16 text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#F1EBDD] text-3xl">
           🌿
         </div>
         <h3
-          className="text-2xl text-[#17382B]"
+          className="text-2xl text-[#2C221E] mb-2"
           style={{ fontFamily: "var(--font-heading)" }}
         >
           No products found
         </h3>
-        <p className="mt-2 text-sm text-[#718078]">
+        <p className="text-sm text-[#685B55]">
           We couldn't find any products matching your selection.
         </p>
       </div>
@@ -49,11 +49,11 @@ export default function ProductGrid({ products, cols = 3 }: ProductGridProps) {
   return (
     <div className={`grid gap-6 ${colClass}`}>
       {products.map((product) => (
-        <ProductCard 
-          key={product.id} 
-          product={product} 
-          onAddToCart={() => {
-            addToCart(product.id, 1);
+        <ProductCard
+          key={product.id}
+          product={product}
+          onAddToCart={async () => {
+            await addToCart(product.id, 1);
           }}
         />
       ))}

@@ -26,6 +26,7 @@ from app.routes.orders import router as orders_router
 from app.routes.payments import router as payments_router
 from app.routes.coupons import router as coupons_router
 from app.routes.analytics import router as analytics_router
+from app.routes.policies import router as policies_router
 
 from app.routes.admin.users import router as admin_users_router
 from app.routes.admin.products import router as admin_products_router
@@ -55,6 +56,31 @@ def on_startup():
 
 
 # ---------------------------------------------------------
+# CORS
+# ---------------------------------------------------------
+allowed_origins = [
+    settings.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+allowed_origins = list(dict.fromkeys(o for o in allowed_origins if o))
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ---------------------------------------------------------
 # Rate Limiting & Context Variables
 # ---------------------------------------------------------
 limiter = Limiter(key_func=get_remote_address)
@@ -68,26 +94,6 @@ async def add_context_vars(request: Request, call_next):
     ip = request.client.host if request.client else None
     client_ip_var.set(ip)
     return await call_next(request)
-
-# ---------------------------------------------------------
-# CORS
-# ---------------------------------------------------------
-allowed_origins = [
-    settings.FRONTEND_URL,
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-]
-allowed_origins = list(dict.fromkeys(o for o in allowed_origins if o))
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # ---------------------------------------------------------
 # Static Files Setup (for uploaded product images)
@@ -109,6 +115,7 @@ app.include_router(orders_router, prefix="/api/v1/orders")
 app.include_router(payments_router, prefix="/api/v1/payments")
 app.include_router(coupons_router, prefix="/api/v1/coupons")
 app.include_router(analytics_router, prefix="/api/v1/analytics")
+app.include_router(policies_router, prefix="/api/v1/policies")
 
 # Admin routes
 app.include_router(admin_users_router, prefix="/api/v1/admin/users")

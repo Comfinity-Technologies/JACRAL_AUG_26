@@ -16,6 +16,7 @@ import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminMFASetupPage from "./pages/admin/AdminMFASetupPage";
 import AdminExportsPage from "./pages/admin/AdminExportsPage";
+import AdminPoliciesPage from "./pages/admin/AdminPoliciesPage";
 
 const router = createBrowserRouter([
   { path: "/login", element: <AdminLoginPage /> },
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
       { path: "coupons", element: <AdminCouponsPage /> },
       { path: "settings", element: <AdminMFASetupPage /> },
       { path: "exports", element: <AdminExportsPage /> },
+      { path: "policies", element: <AdminPoliciesPage /> },
       { path: "*", element: <Navigate to="/dashboard" replace /> },
     ],
   },

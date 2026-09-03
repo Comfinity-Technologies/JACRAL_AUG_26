@@ -1,16 +1,28 @@
 import { useState, useEffect, useRef } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { ShoppingBag, User, Search, Menu, X, ChevronDown, Leaf } from "lucide-react";
-import { apiClient } from "../../api/client";
+import {
+  ShoppingBag, User, Search, Menu, X, ChevronDown, Leaf, FileText
+} from "lucide-react";
+import { useCart } from "../../hooks/useCart";
+
+const POLICIES = [
+  { to: "/policy/privacy",  label: "Privacy Policy" },
+  { to: "/policy/terms",    label: "Terms of Service" },
+  { to: "/policy/shipping", label: "Shipping Policy" },
+  { to: "/policy/return",   label: "Return & Refund Policy" },
+];
 
 export default function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileOpen, setMobileOpen]   = useState(false);
+  const [searchOpen, setSearchOpen]   = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [scrolled, setScrolled] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
+  const [scrolled, setScrolled]       = useState(false);
+  const [policyOpen, setPolicyOpen]   = useState(false);
+  const searchRef   = useRef<HTMLInputElement>(null);
+  const policyRef   = useRef<HTMLDivElement>(null);
+  const navigate    = useNavigate();
+
+  const { itemCount } = useCart();
 
   // Scroll shadow
   useEffect(() => {
@@ -19,20 +31,21 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Cart count
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (!token) return;
-    apiClient.get("/api/v1/cart").then((r) => {
-      const items: any[] = r.data?.items ?? [];
-      setCartCount(items.reduce((s: number, i: any) => s + i.quantity, 0));
-    }).catch(() => {});
-  }, []);
-
   // Focus search input when opened
   useEffect(() => {
     if (searchOpen) searchRef.current?.focus();
   }, [searchOpen]);
+
+  // Close policy dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (policyRef.current && !policyRef.current.contains(e.target as Node)) {
+        setPolicyOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,18 +57,26 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { to: "/", label: "Home" },
-    { to: "/shop", label: "Shop" },
+    { to: "/",                      label: "Home",      end: true  },
+    { to: "/shop",                  label: "Shop",      end: false },
+    { to: "/shop?category=Jackfruit", label: "Jackfruit", end: false },
+    { to: "/shop?category=Cereals",   label: "Cereals",   end: false },
   ];
 
   return (
     <>
       {/* ── ANNOUNCEMENT BAR ── */}
-      <div className="overflow-hidden bg-[#3B6E4C] py-2.5 text-white">
-        <div className="marquee-track flex whitespace-nowrap text-xs font-medium tracking-[0.12em]">
+      <div className="overflow-hidden bg-[#3B6E4C] py-2 text-white">
+        <div
+          className="marquee-track flex whitespace-nowrap text-xs font-medium tracking-[0.1em]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
           {[...Array(6)].map((_, i) => (
-            <span key={i} className="mr-16">
-              🌿 Free shipping on orders above ₹999 &nbsp;·&nbsp; 🌾 100% Natural Products &nbsp;·&nbsp; 🌳 Fresh Jackfruit Delivered &nbsp;·&nbsp; ✨ New Arrivals Weekly
+            <span key={i} className="mr-14">
+              🌿&nbsp;Free shipping on orders above ₹999&nbsp;&nbsp;·&nbsp;&nbsp;
+              🌾&nbsp;100% Natural Products&nbsp;&nbsp;·&nbsp;&nbsp;
+              🌳&nbsp;Premium Jackfruit Delivered&nbsp;&nbsp;·&nbsp;&nbsp;
+              ✨&nbsp;New Arrivals Every Week
             </span>
           ))}
         </div>
@@ -64,14 +85,14 @@ export default function Navbar() {
       {/* ── MAIN HEADER ── */}
       <header
         className={`sticky top-0 z-50 glass-nav transition-all duration-300 ${
-          scrolled ? "shadow-md py-1" : "py-3"
+          scrolled ? "shadow-lg py-0" : "py-1"
         }`}
       >
-        <div className="mx-auto flex h-[64px] max-w-7xl items-center justify-between gap-6 px-6 md:px-10">
+        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-4 px-6 md:px-10">
 
-          {/* Logo */}
-          <Link to="/" className="flex-shrink-0 flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3B6E4C]">
+          {/* ── LOGO ── */}
+          <Link to="/" className="flex-shrink-0 flex items-center gap-2.5 group">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3B6E4C] shadow-sm group-hover:bg-[#2E583C] transition-colors">
               <Leaf size={17} className="text-white" strokeWidth={1.8} />
             </div>
             <span
@@ -82,16 +103,18 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden items-center gap-7 md:flex">
+          {/* ── DESKTOP NAV ── */}
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
-                end={link.to === "/"}
+                end={link.end}
                 className={({ isActive }) =>
-                  `text-[0.85rem] font-semibold tracking-wide transition-colors ${
-                    isActive ? "text-[#E88D36]" : "text-[#685B55] hover:text-[#3B6E4C]"
+                  `relative px-4 py-2 text-[0.85rem] font-semibold tracking-wide rounded-full transition-colors ${
+                    isActive
+                      ? "text-[#3B6E4C] bg-[#3B6E4C]/8"
+                      : "text-[#685B55] hover:text-[#2C221E] hover:bg-[#2C221E]/5"
                   }`
                 }
               >
@@ -99,37 +122,78 @@ export default function Navbar() {
               </NavLink>
             ))}
 
-            {/* Categories dropdown stub */}
-            <button
-              type="button"
-              className="flex items-center gap-1 text-[0.85rem] font-semibold tracking-wide text-[#685B55] hover:text-[#3B6E4C] transition-colors"
-            >
-              Categories <ChevronDown size={13} />
-            </button>
+            {/* ── POLICIES DROPDOWN (replaces Categories) ── */}
+            <div className="relative" ref={policyRef}>
+              <button
+                type="button"
+                onClick={() => setPolicyOpen((p) => !p)}
+                aria-haspopup="true"
+                aria-expanded={policyOpen}
+                className={`flex items-center gap-1 px-4 py-2 text-[0.85rem] font-semibold tracking-wide rounded-full transition-colors ${
+                  policyOpen
+                    ? "text-[#E88D36] bg-[#E88D36]/10"
+                    : "text-[#685B55] hover:text-[#2C221E] hover:bg-[#2C221E]/5"
+                }`}
+              >
+                <FileText size={13} strokeWidth={2.5} />
+                <span className="ml-1">Policies</span>
+                <ChevronDown
+                  size={12}
+                  strokeWidth={2.5}
+                  className={`transition-transform duration-200 ${policyOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {/* Dropdown panel */}
+              {policyOpen && (
+                <div className="absolute left-0 top-full mt-2 w-56 rounded-2xl border border-[#E5DCDB] bg-white shadow-xl shadow-black/8 py-2 z-50 animate-fadeIn">
+                  {/* Orange accent top bar */}
+                  <div className="mx-3 mb-2 pb-2 border-b border-[#F3EFE5]">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#E88D36] px-2 pt-1">
+                      Site Policies
+                    </p>
+                  </div>
+                  {POLICIES.map((p) => (
+                    <Link
+                      key={p.to}
+                      to={p.to}
+                      onClick={() => setPolicyOpen(false)}
+                      className="flex items-center gap-2.5 mx-2 px-3 py-2.5 rounded-xl text-sm font-medium text-[#2C221E] hover:bg-[#E88D36]/8 hover:text-[#E88D36] transition-colors group"
+                    >
+                      <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[#FAF6EE] text-[#E88D36] group-hover:bg-[#E88D36] group-hover:text-white transition-colors">
+                        <FileText size={13} />
+                      </span>
+                      {p.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
+          {/* ── ACTIONS ── */}
+          <div className="flex items-center gap-1">
             {/* Search toggle */}
             <button
               type="button"
               aria-label="Search"
               onClick={() => setSearchOpen((p) => !p)}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#2C221E] hover:bg-[#F2EBDC] transition"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#2C221E] hover:bg-[#E9E1D0] transition"
             >
-              <Search size={18} strokeWidth={1.8} />
+              {searchOpen ? <X size={18} strokeWidth={1.8} /> : <Search size={18} strokeWidth={1.8} />}
             </button>
 
             {/* Cart */}
             <Link
               to="/cart"
-              aria-label={`Cart (${cartCount})`}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#2C221E] hover:bg-[#F2EBDC] transition"
+              aria-label={`Cart (${itemCount} items)`}
+              className="relative flex items-center gap-2 rounded-full border border-[#E5DCDB] bg-white px-4 py-2 text-[0.83rem] font-semibold text-[#2C221E] hover:border-[#E88D36] hover:text-[#E88D36] transition shadow-sm"
             >
-              <ShoppingBag size={18} strokeWidth={1.8} />
-              {cartCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#FFB800] text-[9px] font-bold text-[#2C221E]">
-                  {cartCount > 9 ? "9+" : cartCount}
+              <ShoppingBag size={16} strokeWidth={2} />
+              <span className="hidden sm:inline">Cart</span>
+              {itemCount > 0 && (
+                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#E88D36] px-1 text-[10px] font-bold text-white">
+                  {itemCount > 9 ? "9+" : itemCount}
                 </span>
               )}
             </Link>
@@ -137,8 +201,8 @@ export default function Navbar() {
             {/* Account */}
             <Link
               to="/account"
-              aria-label="Account"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#17382B] hover:bg-[#E9E1D0] transition"
+              aria-label="My Account"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#2C221E] hover:bg-[#E9E1D0] transition"
             >
               <User size={18} strokeWidth={1.8} />
             </Link>
@@ -148,7 +212,7 @@ export default function Navbar() {
               type="button"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
               onClick={() => setMobileOpen((p) => !p)}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#17382B] hover:bg-[#E9E1D0] transition md:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#2C221E] hover:bg-[#E9E1D0] transition md:hidden"
             >
               {mobileOpen ? <X size={19} /> : <Menu size={19} />}
             </button>
@@ -157,29 +221,31 @@ export default function Navbar() {
 
         {/* ── SEARCH BAR ── */}
         {searchOpen && (
-          <div className="border-t border-[#E5E0D5] bg-white px-6 py-4">
+          <div className="border-t border-[#E5E0D5] bg-white/95 backdrop-blur-sm px-6 py-4">
             <form onSubmit={handleSearch} className="mx-auto flex max-w-2xl items-center gap-3">
-              <Search size={18} className="flex-shrink-0 text-[#C98B4A]" />
+              <Search size={18} className="flex-shrink-0 text-[#E88D36]" />
               <input
                 ref={searchRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search jackfruit products, cereals..."
-                className="flex-1 border-0 bg-transparent text-base text-[#17382B] placeholder-[#718078] outline-none"
+                placeholder="Search jackfruit products, cereals, grains…"
+                className="flex-1 border-0 bg-transparent text-base text-[#2C221E] placeholder-[#A8988E] outline-none"
+                aria-label="Search products"
               />
               <button
                 type="submit"
-                className="rounded-full bg-[#17382B] px-5 py-2 text-sm font-semibold text-white"
+                className="rounded-full bg-[#E88D36] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#D47E2A] transition"
               >
                 Search
               </button>
               <button
                 type="button"
+                aria-label="Close search"
                 onClick={() => setSearchOpen(false)}
-                className="text-[#718078] hover:text-[#17382B] transition"
+                className="text-[#A8988E] hover:text-[#2C221E] transition"
               >
-                <X size={17} />
+                <X size={16} />
               </button>
             </form>
           </div>
@@ -187,19 +253,22 @@ export default function Navbar() {
 
         {/* ── MOBILE MENU ── */}
         {mobileOpen && (
-          <nav className="border-t border-[#E5E0D5] bg-[#FCFAF4] px-6 pb-6 md:hidden">
+          <nav
+            className="border-t border-[#E5E0D5] bg-[#FCFAF4]/98 backdrop-blur-sm px-6 pb-6 md:hidden"
+            aria-label="Mobile navigation"
+          >
             <ul className="mt-4 space-y-1">
               {navLinks.map((link) => (
                 <li key={link.to}>
                   <NavLink
                     to={link.to}
-                    end={link.to === "/"}
+                    end={link.end}
                     onClick={() => setMobileOpen(false)}
                     className={({ isActive }) =>
                       `block rounded-xl px-4 py-3 text-sm font-semibold transition ${
                         isActive
-                          ? "bg-[#E9E1D0] text-[#17382B]"
-                          : "text-[#52645D] hover:bg-[#F3EFE5]"
+                          ? "bg-[#3B6E4C]/10 text-[#3B6E4C]"
+                          : "text-[#685B55] hover:bg-[#F3EFE5] hover:text-[#2C221E]"
                       }`
                     }
                   >
@@ -207,20 +276,47 @@ export default function Navbar() {
                   </NavLink>
                 </li>
               ))}
+
+              {/* Policies section in mobile */}
               <li>
+                <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-[#E88D36]">
+                  Policies
+                </p>
+              </li>
+              {POLICIES.map((p) => (
+                <li key={p.to}>
+                  <Link
+                    to={p.to}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[#685B55] hover:bg-[#E88D36]/8 hover:text-[#E88D36] transition"
+                  >
+                    <FileText size={14} className="text-[#E88D36]" />
+                    {p.label}
+                  </Link>
+                </li>
+              ))}
+
+              <li className="pt-2 border-t border-[#E5DCDB] mt-2">
                 <Link
                   to="/cart"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-[#52645D] hover:bg-[#F3EFE5] transition"
+                  className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-[#685B55] hover:bg-[#F3EFE5] hover:text-[#2C221E] transition"
                 >
-                  <ShoppingBag size={16} /> Cart {cartCount > 0 && `(${cartCount})`}
+                  <span className="flex items-center gap-2">
+                    <ShoppingBag size={16} /> Cart
+                  </span>
+                  {itemCount > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#E88D36] px-1 text-[10px] font-bold text-white">
+                      {itemCount}
+                    </span>
+                  )}
                 </Link>
               </li>
               <li>
                 <Link
                   to="/account"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-[#52645D] hover:bg-[#F3EFE5] transition"
+                  className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-[#685B55] hover:bg-[#F3EFE5] hover:text-[#2C221E] transition"
                 >
                   <User size={16} /> Account
                 </Link>

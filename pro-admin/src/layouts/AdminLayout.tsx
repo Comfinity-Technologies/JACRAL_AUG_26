@@ -2,18 +2,18 @@ import { Outlet, Navigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import {
   LayoutDashboard,
-  Users,
-  ShoppingBag,
-  ListOrdered,
-  Tag,
-  Tags,
+  Building2,
+  Cpu,
+  Server,
+  ShieldCheck,
+  History,
   LogOut,
   BarChart3,
   Leaf,
 } from "lucide-react";
 
 // Admin roles in JACRAL system
-const ADMIN_ROLES = ["PRO_ADMIN"];
+const ADMIN_ROLES = ["PRO_ADMIN", "SUPER_ADMIN", "ADMIN", "EMPLOYEE"];
 
 const AdminLayout = () => {
   const { user, loading, logout } = useAuth();
@@ -33,11 +33,11 @@ const AdminLayout = () => {
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-    { name: "Clients", path: "/clients", icon: Users },
-    { name: "Integrations", path: "/integrations", icon: Tags },
-    { name: "Services", path: "/services", icon: ListOrdered },
-    { name: "Security", path: "/security", icon: Tag },
-    { name: "Audit Logs", path: "/audit-logs", icon: ShoppingBag },
+    { name: "Clients", path: "/clients", icon: Building2 },
+    { name: "Integrations", path: "/integrations", icon: Cpu },
+    { name: "Services", path: "/services", icon: Server },
+    { name: "Security", path: "/security", icon: ShieldCheck },
+    { name: "Audit Logs", path: "/audit-logs", icon: History },
     { name: "Analytics", path: "/analytics", icon: BarChart3 },
   ];
 

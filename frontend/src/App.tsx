@@ -14,7 +14,19 @@ import RegisterPage from "./pages/customer/RegisterPage";
 import AccountPage from "./pages/customer/AccountPage";
 import OrderSuccessPage from "./pages/customer/OrderSuccessPage";
 import NotFoundPage from "./pages/customer/NotFoundPage";
+import PolicyPage from "./pages/customer/PolicyPage";
 
+// Admin
+import AdminLayout from "./layouts/AdminLayout";
+import AdminLoginPage from "./pages/admin/AdminLoginPage";
+import DashboardPage from "./pages/admin/DashboardPage";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
+import AdminMFASetupPage from "./pages/admin/AdminMFASetupPage";
 
 const router = createBrowserRouter([
   // Customer routes
@@ -30,9 +42,31 @@ const router = createBrowserRouter([
       { path: "/register", element: <RegisterPage /> },
       { path: "/account", element: <AccountPage /> },
       { path: "/order-success", element: <OrderSuccessPage /> },
-      { path: "*", element: <NotFoundPage /> },
+      { path: "/policy/:slug", element: <PolicyPage /> },
     ],
   },
+  
+  // Admin Login (No Layout)
+  { path: "/admin/login", element: <AdminLoginPage /> },
+  
+  // Admin Routes (With Layout)
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: <DashboardPage /> },
+      { path: "orders", element: <AdminOrdersPage /> },
+      { path: "products", element: <AdminProductsPage /> },
+      { path: "categories", element: <AdminCategoriesPage /> },
+      { path: "analytics", element: <AdminAnalyticsPage /> },
+      { path: "users", element: <AdminUsersPage /> },
+      { path: "coupons", element: <AdminCouponsPage /> },
+      { path: "settings", element: <AdminMFASetupPage /> },
+    ],
+  },
+
+  // Fallback
+  { path: "*", element: <NotFoundPage /> },
 ]);
 
 export default function App() {

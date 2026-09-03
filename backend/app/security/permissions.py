@@ -24,8 +24,9 @@ def _require_role(minimum_role: str):
     """Factory: returns a dependency that enforces a minimum role level."""
 
     def dependency(current_user: User = Depends(get_current_user)) -> User:
-        user_level = _ROLE_LEVEL.get(current_user.role, -1)
-        required_level = _ROLE_LEVEL[minimum_role]
+        user_role = (current_user.role or "CUSTOMER").upper()
+        user_level = _ROLE_LEVEL.get(user_role, 0)
+        required_level = _ROLE_LEVEL.get(minimum_role.upper(), 0)
 
         if user_level < required_level:
             raise HTTPException(

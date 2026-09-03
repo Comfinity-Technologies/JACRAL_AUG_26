@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Eye, Star } from "lucide-react";
+import { ShoppingBag, Eye, Check, Loader2 } from "lucide-react";
+import { getImageUrl } from "../../utils/image";
 
 interface Product {
   id: number;
@@ -16,7 +18,7 @@ interface Product {
 
 type ProductCardProps = {
   product: Product;
-  onAddToCart?: (product: Product) => void;
+  onAddToCart?: (product: Product) => Promise<void> | void;
 };
 
 function getCategoryName(cat: Product["category"]): string {
@@ -25,104 +27,138 @@ function getCategoryName(cat: Product["category"]): string {
   return cat.name;
 }
 
-function getBadgeClass(badge?: string) {
-  if (!badge) return "";
-  const b = badge.toLowerCase();
-  if (b.includes("best") || b.includes("popular") || b.includes("top")) return "badge-forest";
-  if (b.includes("sale") || b.includes("new") || b.includes("fresh")) return "badge-accent";
-  return "badge-cream";
-}
-
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  const [cartState, setCartState] = useState<"idle" | "loading" | "success">("idle");
+
   const isOutOfStock = product.stock <= 0;
   const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
   const categoryName = getCategoryName(product.category);
 
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!onAddToCart || cartState !== "idle") return;
+
+    setCartState("loading");
+    try {
+      await onAddToCart(product);
+      setCartState("success");
+      setTimeout(() => setCartState("idle"), 2200);
+    } catch {
+      setCartState("idle");
+    }
+  };
+
+  const categoryEmoji = categoryName.toLowerCase().includes("cereal")
+    ? "🌾"
+    : categoryName.toLowerCase().includes("grain")
+    ? "🍃"
+    : "🌳";
+
   return (
-    <article className="botanica-card group flex flex-col h-full relative">
-      {/* ── IMAGE AREA ── */}
-      <Link to={`/product/${product.id}`} className="relative block h-64 overflow-hidden bg-gradient-to-br from-[#F2EBDC] to-[#E9E1D0]">
-        <div className="absolute inset-0 flex items-center justify-center transition-transform duration-700 group-hover:scale-110">
+    <article className="natura-card group flex flex-col h-full relative">
+
+      {/* ── IMAGE ── */}
+      <Link
+        to={`/product/${product.id}`}
+        className="relative block overflow-hidden"
+        style={{ aspectRatio: "4/3" }}
+        tabIndex={0}
+        aria-label={`View ${product.name}`}
+      >
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#F2EBDC] to-[#E9E1D0]">
           {product.image_url ? (
             <img
-              src={product.image_url}
+              src={getImageUrl(product.image_url)}
               alt={product.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="lazy"
             />
           ) : (
-            <div className="text-[6rem] opacity-90 drop-shadow-lg">
-              {categoryName.toLowerCase().includes("cereal") ? "🌾" : "🌳"}
+            <div className="text-[5rem] opacity-80 drop-shadow-md transition-transform duration-500 group-hover:scale-110">
+              {categoryEmoji}
             </div>
           )}
         </div>
 
-        {/* Badges */}
-        <div className="absolute left-4 top-4 flex flex-col gap-2 z-10">
+        {/* Badge overlays */}
+        <div className="absolute left-3 top-3 flex flex-col gap-1.5 z-10">
           {product.featured && (
-            <span className="product-tag text-[#3B6E4C]">Best Seller</span>
+            <span className="product-tag text-[#3B6E4C] text-[0.7rem]">Best Seller</span>
           )}
           {product.badge && (
-            <span className="product-tag text-[#E88D36]">{product.badge}</span>
+            <span className="product-tag text-[#E88D36] text-[0.7rem]">{product.badge}</span>
           )}
           {isOutOfStock && (
-            <span className="product-tag bg-[#2C221E] text-white">Sold Out</span>
+            <span className="product-tag bg-[#2C221E]/80 text-white text-[0.7rem]">Sold Out</span>
           )}
         </div>
 
-        {/* Quick view overlay */}
-        <div className="absolute inset-0 bg-[#2C221E]/0 opacity-0 transition-all duration-300 group-hover:bg-[#2C221E]/10 group-hover:opacity-100 flex items-center justify-center">
-          <span className="nav-pill bg-white text-[#2C221E] shadow-lg flex items-center gap-2 translate-y-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 font-bold">
-            <Eye size={16} /> Quick View
+        {/* Hover quick-view overlay */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[#2C221E]/8">
+          <span className="nav-pill bg-white text-[#2C221E] shadow-lg flex items-center gap-2 translate-y-3 group-hover:translate-y-0 transition-transform duration-300 font-semibold text-sm border border-[#E5DCDB]">
+            <Eye size={15} /> Quick View
           </span>
         </div>
       </Link>
 
       {/* ── CONTENT ── */}
-      <div className="flex flex-col flex-1 p-6 bg-white z-10">
-        <div className="flex justify-between items-start mb-2">
-          <Link to={`/product/${product.id}`}>
-            <h3
-              className="text-lg font-bold text-[#2C221E] transition-colors hover:text-[#E88D36] leading-tight"
-              style={{ fontFamily: "var(--font-heading)" }}
-            >
-              {product.name}
-            </h3>
-          </Link>
-          <p className="text-xl font-bold text-[#3B6E4C] ml-3 whitespace-nowrap">
-            ₹{price.toLocaleString("en-IN")}
-          </p>
-        </div>
+      <div className="flex flex-col flex-1 p-5 bg-white">
 
-        <p className="text-xs font-bold uppercase tracking-wider text-[#E88D36] mb-3">
+        {/* Category label */}
+        <p className="text-[0.72rem] font-bold uppercase tracking-widest text-[#E88D36] mb-2">
           {categoryName}
         </p>
 
+        {/* Product name */}
+        <Link to={`/product/${product.id}`}>
+          <h3
+            className="text-[1rem] font-bold text-[#2C221E] hover:text-[#3B6E4C] transition-colors leading-tight mb-1"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* Description */}
         {product.description && (
-          <p className="text-sm text-[#685B55] line-clamp-2 mb-4 leading-relaxed">
+          <p className="text-[0.8rem] text-[#685B55] line-clamp-2 leading-relaxed mt-1 mb-3">
             {product.description}
           </p>
         )}
 
-        <div className="mt-auto flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} size={12} className={i < 4 ? "fill-[#FFB800] text-[#FFB800]" : "fill-none text-[#DCD7CB]"} />
-            ))}
-            <span className="text-xs text-[#685B55] ml-1">(24)</span>
-          </div>
+        {/* Price + Add to Cart */}
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3 border-t border-[#F2EBDC]">
+          <span className="text-xl font-bold text-[#2C221E]">
+            ₹{price.toLocaleString("en-IN")}
+          </span>
 
           <button
             type="button"
-            disabled={isOutOfStock}
-            onClick={(e) => {
-              e.preventDefault();
-              onAddToCart?.(product);
-            }}
-            className="group/btn relative overflow-hidden rounded-full bg-[#FAF6EE] border border-[#E5DCDB] w-10 h-10 flex items-center justify-center transition-colors hover:border-[#3B6E4C] disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label={isOutOfStock ? "Sold out" : `Add ${product.name} to cart`}
+            disabled={isOutOfStock || cartState === "loading"}
+            onClick={handleAddToCart}
+            aria-label={
+              isOutOfStock
+                ? "Sold out"
+                : cartState === "success"
+                ? "Added to cart"
+                : `Add ${product.name} to cart`
+            }
+            className={`relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300 ${
+              cartState === "success"
+                ? "bg-[#3B6E4C] text-white shadow-md shadow-[#3B6E4C]/30"
+                : isOutOfStock
+                ? "bg-[#F2EBDC] text-[#A8988E] cursor-not-allowed opacity-60"
+                : "bg-[#FAF6EE] border border-[#E5DCDB] text-[#2C221E] hover:bg-[#3B6E4C] hover:border-[#3B6E4C] hover:text-white hover:shadow-md hover:shadow-[#3B6E4C]/25"
+            }`}
           >
-            <div className="absolute inset-0 bg-[#3B6E4C] scale-0 transition-transform duration-300 rounded-full group-hover/btn:scale-100 origin-center"></div>
-            <ShoppingBag size={16} strokeWidth={2} className="relative z-10 text-[#2C221E] group-hover/btn:text-white transition-colors" />
+            {cartState === "loading" ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : cartState === "success" ? (
+              <Check size={16} strokeWidth={2.5} />
+            ) : (
+              <ShoppingBag size={16} strokeWidth={2} />
+            )}
           </button>
         </div>
       </div>

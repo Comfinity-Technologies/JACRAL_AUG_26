@@ -89,7 +89,7 @@ const AdminUsersPage = () => {
           <p className="text-[#685B55]">View and manage customer and staff accounts.</p>
         </div>
         {activeTab === "staff" && (
-          <button onClick={() => setShowAddForm(!showAddForm)} className="bg-[#E88D36] text-white px-6 py-3 rounded-full font-bold hover:bg-[#D47E2A] transition-colors shadow-lg shadow-[#E88D36]/20">
+          <button onClick={() => setShowAddForm(!showAddForm)} className="bg-[#E88D36] text-[#2C221E] px-6 py-3 rounded-full font-bold hover:bg-[#D47E2A] hover:text-white transition-colors shadow-lg shadow-[#E88D36]/20">
             Add Person
           </button>
         )}

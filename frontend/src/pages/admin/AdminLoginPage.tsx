@@ -141,7 +141,7 @@ export default function AdminLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#E88D36] text-white py-4 rounded-xl font-bold hover:bg-[#D47E2A] transition-all disabled:opacity-60 disabled:cursor-not-allowed text-base tracking-wide shadow-lg shadow-[#E88D36]/20 hover:-translate-y-1 mt-2"
+                  className="w-full bg-[#E88D36] text-[#2C221E] py-4 rounded-xl font-bold hover:bg-[#D47E2A] hover:text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed text-base tracking-wide shadow-lg shadow-[#E88D36]/20 hover:-translate-y-1 mt-2"
                 >
                   {loading ? "Authenticating..." : "Sign In to Dashboard"}
                 </button>

@@ -134,12 +134,7 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <p className="mt-3 text-center text-xs text-[#A8988E]">
-            Admin?{" "}
-            <Link to="/admin/login" className="text-[#E88D36] font-medium hover:underline">
-              Go to Admin Login
-            </Link>
-          </p>
+
         </form>
       </div>
     </div>

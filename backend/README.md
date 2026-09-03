@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # JACRAL Ecommerce Backend
 
 This is the complete, production-ready FastAPI backend for the JACRAL ecommerce platform, featuring comprehensive authentication, product management, order processing, voting capabilities, and analytics.
@@ -130,31 +129,3 @@ The following features are fully implemented but require valid third-party crede
    `Authorization: Bearer <access_token>`
 4. **Refreshing Sessions**: On page reload, call `GET /api/v1/auth/me` with the access token to restore the user session. If the token expires, use the refresh token with `POST /api/v1/auth/refresh`.
 5. **Admin Access**: If `user.role` is `admin`, `manager`, or `staff`, display the admin dashboard link and route requests to the `/api/v1/admin/*` endpoints.
-=======
-# Jacral
-
-Jacral is an ecommerce platform for selling jackfruit and cereals.
-
-## Project Architecture
-
-The system consists of:
-
-- Customer-facing ecommerce website
-- Admin dashboard
-- python - backend 
-- PostgreSQL database
-- Payment gateway
-- Nodemailer-based email service
-- UTM campaign tracking
-- Analytics
-- Inventory management
-- Order management
-
-## Project Structure
-
-```text
-frontend/   - Customer website and admin interface
-backend/    - Node.js API and business logic
-database/   - Database migrations and seed data
-docs/       - Project documentation
->>>>>>> origin/main

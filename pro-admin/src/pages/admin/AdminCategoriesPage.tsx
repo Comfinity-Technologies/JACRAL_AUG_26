@@ -77,7 +77,7 @@ const AdminCategoriesPage = () => {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center space-x-2 bg-[#E88D36] text-white px-6 py-3 rounded-full font-bold hover:bg-[#D47E2A] transition-colors shadow-lg shadow-[#E88D36]/20"
+          className="flex items-center space-x-2 bg-[#E88D36] text-[#2C221E] px-6 py-3 rounded-full font-bold hover:bg-[#D47E2A] hover:text-white transition-colors shadow-lg shadow-[#E88D36]/20"
         >
           <Plus className="w-5 h-5" />
           <span>Add Category</span>

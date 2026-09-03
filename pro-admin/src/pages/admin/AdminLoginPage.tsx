@@ -132,6 +132,34 @@ export default function AdminLoginPage() {
                   />
                 </div>
 
+                {/* Quick Fill Credentials for Demo */}
+                <div className="p-3 bg-[#FAF6EE] rounded-xl border border-[#E5DCDB] space-y-1.5 text-xs text-[#685B55]">
+                  <p className="font-bold text-[#2C221E] uppercase tracking-wider text-[0.7rem]">Quick Demo Login:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => { setEmail("proadmin@jacral.com"); setPassword("ProAdminPassword123!"); }}
+                      className="px-2.5 py-1 bg-[#3B6E4C] text-white rounded-lg font-semibold hover:opacity-90 transition"
+                    >
+                      Pro Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setEmail("superadmin@jacral.com"); setPassword("SuperAdminPassword123!"); }}
+                      className="px-2.5 py-1 bg-[#E88D36] text-white rounded-lg font-semibold hover:opacity-90 transition"
+                    >
+                      Super Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setEmail("admin@jacral.com"); setPassword("AdminPassword123!"); }}
+                      className="px-2.5 py-1 bg-[#2C221E] text-white rounded-lg font-semibold hover:opacity-90 transition"
+                    >
+                      Admin
+                    </button>
+                  </div>
+                </div>
+
                 {error && (
                   <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 font-medium">
                     {error}
@@ -141,7 +169,7 @@ export default function AdminLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#E88D36] text-white py-4 rounded-xl font-bold hover:bg-[#D47E2A] transition-all disabled:opacity-60 disabled:cursor-not-allowed text-base tracking-wide shadow-lg shadow-[#E88D36]/20 hover:-translate-y-1 mt-2"
+                  className="w-full bg-[#E88D36] text-[#2C221E] py-4 rounded-xl font-bold hover:bg-[#D47E2A] hover:text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed text-base tracking-wide shadow-lg shadow-[#E88D36]/20 hover:-translate-y-1 mt-2"
                 >
                   {loading ? "Authenticating..." : "Sign In to Dashboard"}
                 </button>
