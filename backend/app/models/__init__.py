@@ -13,6 +13,14 @@ from app.models.payment import Payment
 from app.models.utm_visit import UtmVisit
 from app.models.audit_log import AuditLog
 from app.models.policy import Policy
+from app.models.content import (
+    WebsiteSetting,
+    LandingPageSlide,
+    LandingPageSection,
+    MediaAsset,
+)
+from app.models.review import CustomerReview
+from app.models.how_to_use import HowToUseStep
 
 
 __all__ = [
@@ -29,4 +37,10 @@ __all__ = [
     "UtmVisit",
     "AuditLog",
     "Policy",
+    "WebsiteSetting",
+    "LandingPageSlide",
+    "LandingPageSection",
+    "MediaAsset",
+    "CustomerReview",
+    "HowToUseStep",
 ]

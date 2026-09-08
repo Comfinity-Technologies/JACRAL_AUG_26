@@ -21,6 +21,6 @@ The system consists of:
 
 ```text
 frontend/   - Customer website and admin interface
-backend/    - Node.js API and business logic
+backend/    - python API and business logic
 database/   - Database migrations and seed data
 docs/       - Project documentation

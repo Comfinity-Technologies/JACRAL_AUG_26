@@ -17,6 +17,7 @@ import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminMFASetupPage from "./pages/admin/AdminMFASetupPage";
 import AdminExportsPage from "./pages/admin/AdminExportsPage";
 import AdminPoliciesPage from "./pages/admin/AdminPoliciesPage";
+import AdminLandingPageCMS from "./pages/admin/AdminLandingPageCMS";
 
 const router = createBrowserRouter([
   { path: "/login", element: <AdminLoginPage /> },
@@ -36,6 +37,8 @@ const router = createBrowserRouter([
       { path: "settings", element: <AdminMFASetupPage /> },
       { path: "exports", element: <AdminExportsPage /> },
       { path: "policies", element: <AdminPoliciesPage /> },
+      { path: "landing-page", element: <AdminLandingPageCMS /> },
+      { path: "content/landing-page", element: <AdminLandingPageCMS /> },
       { path: "*", element: <Navigate to="/dashboard" replace /> },
     ],
   },

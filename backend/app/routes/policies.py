@@ -19,7 +19,8 @@ router = APIRouter(tags=["Policies"])
 # PUBLIC endpoints
 # ──────────────────────────────
 
-@router.get("/", response_model=List[PolicyOut])
+@router.get("", response_model=List[PolicyOut])
+@router.get("/", response_model=List[PolicyOut], include_in_schema=False)
 def list_policies(db: Session = Depends(get_db)):
     """Return all active policies – consumed by the customer front-end."""
     return db.query(Policy).filter(Policy.is_active.is_(True)).all()
@@ -38,8 +39,10 @@ def get_policy(slug: str, db: Session = Depends(get_db)):
 # ADMIN endpoints
 # ──────────────────────────────
 
-@router.post("/", response_model=PolicyOut, status_code=201,
+@router.post("", response_model=PolicyOut, status_code=201,
              dependencies=[Depends(require_admin)])
+@router.post("/", response_model=PolicyOut, status_code=201,
+             dependencies=[Depends(require_admin)], include_in_schema=False)
 def create_policy(payload: PolicyCreate, db: Session = Depends(get_db)):
     if db.query(Policy).filter(Policy.slug == payload.slug).first():
         raise HTTPException(status_code=400, detail="Slug already exists")

@@ -130,7 +130,7 @@ export default function CartDrawer({
                   <div className="min-w-0 flex-1">
 
                     <p className="text-xs font-semibold tracking-widest text-[#C98B4A]">
-                      {item.category.toUpperCase()}
+                      {item.category?.toUpperCase() || "PRODUCT"}
                     </p>
 
                     <h3 className="mt-1 truncate font-semibold text-[#17382B]">

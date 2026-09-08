@@ -16,7 +16,7 @@ export default function AdminExportsPage() {
     );
   }
 
-  const handleExport = async (entity: str, format: "pdf" | "excel") => {
+  const handleExport = async (entity: string, format: "pdf" | "excel") => {
     setDownloading(`${entity}-${format}`);
     try {
       const res = await apiClient.get(`/api/v1/admin/exports/${format}/${entity}`, {

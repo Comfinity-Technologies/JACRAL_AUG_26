@@ -10,6 +10,7 @@ import {
   LogOut,
   BarChart3,
   Leaf,
+  Layers,
 } from "lucide-react";
 
 // Admin roles in JACRAL system
@@ -44,9 +45,10 @@ const AdminLayout = () => {
     navItems.push({ name: "Users", path: "/admin/users", icon: Users });
   }
 
-  // Only ADMIN, SUPER_ADMIN, PRO_ADMIN get Coupons
+  // Only ADMIN, SUPER_ADMIN, PRO_ADMIN get Coupons and Landing Page CMS
   if (["ADMIN", "SUPER_ADMIN", "PRO_ADMIN"].includes(user.role)) {
     navItems.push({ name: "Coupons", path: "/admin/coupons", icon: Tag });
+    navItems.push({ name: "Landing Page", path: "/admin/content/landing-page", icon: Layers });
   }
 
   const isActive = (path: string) => {

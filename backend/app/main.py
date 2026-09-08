@@ -27,6 +27,8 @@ from app.routes.payments import router as payments_router
 from app.routes.coupons import router as coupons_router
 from app.routes.analytics import router as analytics_router
 from app.routes.policies import router as policies_router
+from app.routes.content import router as content_router
+from app.routes.reviews import router as reviews_router
 
 from app.routes.admin.users import router as admin_users_router
 from app.routes.admin.products import router as admin_products_router
@@ -35,11 +37,14 @@ from app.routes.admin.orders import router as admin_orders_router
 from app.routes.admin.coupons import router as admin_coupons_router
 from app.routes.admin.analytics import router as admin_analytics_router
 from app.routes.admin.exports import router as admin_exports_router
+from app.routes.admin.content import router as admin_content_router
+from app.routes.admin.reviews import router as admin_reviews_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 from app.seed import seed_admin_users
+from app.seed_content import seed_cms_content
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -50,7 +55,9 @@ app = FastAPI(
 @app.on_event("startup")
 def on_startup():
     try:
+        Base.metadata.create_all(bind=engine)
         seed_admin_users()
+        seed_cms_content()
     except Exception as e:
         logger.error(f"Startup seed error: {e}")
 
@@ -116,6 +123,8 @@ app.include_router(payments_router, prefix="/api/v1/payments")
 app.include_router(coupons_router, prefix="/api/v1/coupons")
 app.include_router(analytics_router, prefix="/api/v1/analytics")
 app.include_router(policies_router, prefix="/api/v1/policies")
+app.include_router(content_router, prefix="/api/v1/content")
+app.include_router(reviews_router, prefix="/api/v1/reviews")
 
 # Admin routes
 app.include_router(admin_users_router, prefix="/api/v1/admin/users")
@@ -125,3 +134,5 @@ app.include_router(admin_orders_router, prefix="/api/v1/admin/orders")
 app.include_router(admin_coupons_router, prefix="/api/v1/admin/coupons")
 app.include_router(admin_analytics_router, prefix="/api/v1/admin/analytics")
 app.include_router(admin_exports_router, prefix="/api/v1/admin/exports")
+app.include_router(admin_content_router, prefix="/api/v1/admin/content")
+app.include_router(admin_reviews_router, prefix="/api/v1/admin/reviews")

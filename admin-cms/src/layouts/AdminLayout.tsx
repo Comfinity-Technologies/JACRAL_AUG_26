@@ -12,6 +12,7 @@ import {
   Leaf,
   FileText,
   Download,
+  Layers,
 } from "lucide-react";
 
 // Admin roles in JACRAL system
@@ -46,11 +47,12 @@ const AdminLayout = () => {
     navItems.push({ name: "Users", path: "/users", icon: Users });
   }
 
-  // Only ADMIN, SUPER_ADMIN, PRO_ADMIN get Coupons, Exports and Policies
+  // Only ADMIN, SUPER_ADMIN, PRO_ADMIN get Coupons, Exports, Policies, and Landing Page CMS
   if (["ADMIN", "SUPER_ADMIN", "PRO_ADMIN"].includes(user.role)) {
     navItems.push({ name: "Coupons", path: "/coupons", icon: Tag });
     navItems.push({ name: "Exports", path: "/exports", icon: Download });
     navItems.push({ name: "Policies", path: "/policies", icon: FileText });
+    navItems.push({ name: "Landing Page", path: "/landing-page", icon: Layers });
   }
 
   const isActive = (path: string) => {

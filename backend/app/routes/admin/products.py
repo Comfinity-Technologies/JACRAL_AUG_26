@@ -134,10 +134,11 @@ def update_product_status(
 async def upload_product_image(
     product_id: int,
     file: UploadFile = File(...),
+    slot: str = Query(default="primary", pattern="^(primary|hover)$"),
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    """Accept a JPEG/PNG/WebP image (max 5 MB) and store it under /static/products/."""
+    """Accept a JPEG/PNG/WebP image (max 5 MB) and store it under /static/products/ for primary or hover slot."""
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found.")
@@ -153,25 +154,24 @@ async def upload_product_image(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large. Max allowed size is 5 MB.")
 
-    # Save with unique filename
-    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
-    filename = f"{product_id}_{uuid.uuid4().hex[:8]}.{ext}"
-    dest = UPLOAD_DIR / filename
+    from app.services.cloudinary_service import upload_image_to_storage
 
-    with open(dest, "wb") as f:
-        f.write(contents)
+    image_url = upload_image_to_storage(
+        file_bytes=contents,
+        folder="products",
+        filename=file.filename,
+        local_fallback_dir=UPLOAD_DIR,
+    )
 
-    # Delete old image file if it was locally stored
-    if product.image_url and product.image_url.startswith("/static/products/"):
-        old_path = Path(__file__).resolve().parents[3] / product.image_url.lstrip("/")
-        if old_path.exists():
-            old_path.unlink(missing_ok=True)
+    if slot == "primary":
+        product.image_url = image_url
+    else:
+        product.hover_image_url = image_url
 
-    product.image_url = f"/static/products/{filename}"
     product.updated_by = admin.id
     db.commit()
     db.refresh(product)
-    audit_service.log_action(db, "PRODUCT_IMAGE_UPLOADED", admin.id, "product", str(product_id), {"filename": filename})
+    audit_service.log_action(db, "PRODUCT_IMAGE_UPLOADED", admin.id, "product", str(product_id), {"filename": file.filename, "slot": slot})
     db.commit()
     return product
 
