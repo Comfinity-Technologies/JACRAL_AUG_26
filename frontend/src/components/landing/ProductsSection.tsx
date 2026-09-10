@@ -1,489 +1,943 @@
-import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import { Leaf, Truck, ShieldCheck, Heart, CheckCheck, ArrowRight } from "lucide-react";
+import { Leaf, Truck, ShieldCheck, Heart, Sparkles } from "lucide-react";
 import ProductCard from "../customer/ProductCard";
 import { useProducts } from "../../hooks/useProducts";
-import { apiClient } from "../../api/client";
 
-interface CouponItem {
-  code: string;
-  discount_type: string;
-  discount_value: number;
-  minimum_order_amount?: number;
-  description?: string | null;
+interface ProductsSectionProps {
+  section?: any;
 }
 
-const MASCOT_POSES = [
-  {
-    src: "/images/mascot/mascot_pose_1.png",
-    alt: "Healthy athletic Jacral mascot presenting Jacral Oats products with both hands",
-  },
-  {
-    src: "/images/mascot/mascot_pose_2.png",
-    alt: "Healthy athletic Jacral mascot gesturing toward Jacral Oats products with hand on hip",
-  },
-  {
-    src: "/images/mascot/mascot_pose_3.png",
-    alt: "Healthy athletic Jacral mascot giving an energetic thumbs up and pointing toward products",
-  },
-];
-
-export default function ProductsSection() {
+export default function ProductsSection({ section }: ProductsSectionProps = {}) {
   const { products, isLoading } = useProducts();
-  const [coupon, setCoupon] = useState<CouponItem | null>(null);
-  const [copied, setCopied] = useState(false);
 
-  // Active products filter & selection:
-  // Prefer Apple Cinnamon & Dark Chocolate or first 2 active products
-  const activeProductsAll = products.filter((p) => p.is_active !== false);
-
-  const applePick = activeProductsAll.find((p) =>
-    (p.name + " " + (p.slug || "")).toLowerCase().includes("apple")
-  );
-  const chocoPick = activeProductsAll.find((p) =>
-    (p.name + " " + (p.slug || "")).toLowerCase().includes("chocolate")
-  );
-
-  const featuredTwo =
-    applePick && chocoPick
-      ? [applePick, chocoPick]
-      : activeProductsAll.slice(0, 2);
-
-  // Fetch dynamic coupon from backend
-  useEffect(() => {
-    let isMounted = true;
-    apiClient
-      .get<CouponItem[]>("/api/v1/content/coupons")
-      .then((res) => {
-        if (!isMounted) return;
-        const list = res.data;
-        if (Array.isArray(list) && list.length > 0) {
-          // Prefer JACRAL10 or highest/first active percentage coupon
-          const found =
-            list.find((c) => c.code.toUpperCase() === "JACRAL10") || list[0];
-          setCoupon(found);
-        }
-      })
-      .catch(() => {
-        // Fallback default dynamic object
-        if (isMounted) {
-          setCoupon({
-            code: "JACRAL10",
-            discount_type: "percentage",
-            discount_value: 10,
-            description: "Get 10% OFF on your first order",
-          });
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const handleCopyCoupon = () => {
-    const code = coupon?.code || "JACRAL10";
-    navigator.clipboard.writeText(code).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2400);
-    });
-  };
-
-  const couponText =
-    coupon?.description ||
-    `Get ${coupon?.discount_value || 10}% OFF on your first order`;
-  const couponCode = coupon?.code || "JACRAL10";
+  /*
+   * Only active products are shown.
+   *
+   * The visual design is fixed, but all actual product information
+   * comes from the Admin Panel / backend.
+   */
+  const activeProducts = products
+    .filter((product) => product.is_active !== false)
+    .slice(0, 2);
 
   return (
     <section
       id="products"
-      className="relative isolate w-full overflow-hidden"
+      className="
+        relative
+        isolate
+        overflow-hidden
+      "
       style={{
-        backgroundColor: "#FAF6ED",
         background:
-          "linear-gradient(180deg, #FAF5EA 0%, #F5ECDB 40%, #EFE4CE 75%, #F4ECE0 100%)",
+          "linear-gradient(160deg, #F8EED9 0%, #F2E4C5 35%, #EDE0C8 65%, #F0E8D0 100%)",
       }}
     >
       {/* =========================================================
-          KEYFRAME STYLES & SUBTLE DECORATIVE ANIMATIONS
+          SECTION ANIMATION + DECORATIVE KEYFRAMES
           ========================================================= */}
-      <style>{`
-        @keyframes jacralFloatSlow {
-          0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-          50%      { transform: translate3d(0, -9px, 0) rotate(1.2deg); }
-        }
-        @keyframes jacralFloatMedium {
-          0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-          50%      { transform: translate3d(4px, -7px, 0) rotate(-1.5deg); }
-        }
-        @keyframes jacralDrift {
-          0%, 100% { transform: translate3d(0, 0, 0); }
-          50%      { transform: translate3d(0, -6px, 0); }
-        }
-        @keyframes jacralPulseSlow {
-          0%, 100% { opacity: 0.35; transform: scale(1); }
-          50%      { opacity: 0.75; transform: scale(1.08); }
-        }
-        @keyframes mascotCrossfade {
-          0%   { opacity: 0; transform: scale(0.985); }
-          12%  { opacity: 1; transform: scale(1); }
-          88%  { opacity: 1; transform: scale(1); }
-          100% { opacity: 0; transform: scale(0.985); }
-        }
-        .jacral-float-slow   { animation: jacralFloatSlow 8s ease-in-out infinite; }
-        .jacral-float-medium { animation: jacralFloatMedium 6.5s ease-in-out infinite; }
-        .jacral-drift        { animation: jacralDrift 7s ease-in-out infinite; }
-        .jacral-pulse        { animation: jacralPulseSlow 4.5s ease-in-out infinite; }
 
-        @media (prefers-reduced-motion: reduce) {
-          .jacral-float-slow,
-          .jacral-float-medium,
-          .jacral-drift,
-          .jacral-pulse {
-            animation: none !important;
+      <style>
+        {`
+          @keyframes jacralFloatSlow {
+            0%, 100% {
+              transform: translate3d(0, 0, 0) rotate(0deg);
+            }
+
+            50% {
+              transform: translate3d(0, -12px, 0) rotate(1.5deg);
+            }
           }
-        }
-      `}</style>
+
+          @keyframes jacralFloatMedium {
+            0%, 100% {
+              transform: translate3d(0, 0, 0) rotate(0deg);
+            }
+
+            50% {
+              transform: translate3d(5px, -9px, 0) rotate(-2deg);
+            }
+          }
+
+          @keyframes jacralDrift {
+            0%, 100% {
+              transform: translate3d(0, 0, 0);
+            }
+
+            50% {
+              transform: translate3d(0, -7px, 0);
+            }
+          }
+
+          @keyframes jacralReveal {
+            from {
+              opacity: 0;
+              transform: translateY(28px) scale(.97);
+            }
+
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+
+          @keyframes jacralSoftPulse {
+            0%, 100% {
+              opacity: .25;
+            }
+
+            50% {
+              opacity: .55;
+            }
+          }
+
+          .jacral-float-slow {
+            animation: jacralFloatSlow 7s ease-in-out infinite;
+          }
+
+          .jacral-float-medium {
+            animation: jacralFloatMedium 5.5s ease-in-out infinite;
+          }
+
+          .jacral-drift {
+            animation: jacralDrift 6s ease-in-out infinite;
+          }
+
+          .jacral-reveal {
+            animation: jacralReveal .8s cubic-bezier(.22,1,.36,1) both;
+          }
+
+          .jacral-pulse {
+            animation: jacralSoftPulse 4s ease-in-out infinite;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .jacral-float-slow,
+            .jacral-float-medium,
+            .jacral-drift,
+            .jacral-reveal,
+            .jacral-pulse {
+              animation: none !important;
+            }
+          }
+        `}
+      </style>
 
       {/* =========================================================
-          SUBTLE AMBIENT BACKGROUND GLOWS & CODED FLOATING ACCENTS
-          (NO LARGE JACKFRUIT IMAGE ANYWHERE)
+          IMAGE-BASED FLOATING BACKGROUND
           ========================================================= */}
+
       <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          -z-10
+          overflow-hidden
+        "
         aria-hidden="true"
       >
-        {/* Warm center ambient light */}
+        {/* Warm cream center glow */}
         <div
-          className="absolute left-1/2 top-[32%] h-[680px] w-[1150px] -translate-x-1/2 rounded-full opacity-60 blur-[120px]"
+          className="
+            absolute
+            left-1/2
+            top-[38%]
+            h-[700px]
+            w-[1100px]
+            -translate-x-1/2
+            rounded-full
+            opacity-70
+            blur-[110px]
+          "
+          style={{ background: "radial-gradient(ellipse, #FFF4DC 0%, #F5E4B0 50%, transparent 80%)" }}
+        />
+
+        {/* Brown ambient glow — bottom-left */}
+        <div
           style={{
-            background:
-              "radial-gradient(ellipse, #FFF5DE 0%, #F5E5BE 45%, transparent 75%)",
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            width: "500px",
+            height: "400px",
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse at 20% 80%, rgba(139,69,19,0.09) 0%, transparent 65%)",
           }}
         />
 
-        {/* Coded Floating Oat & Leaf elements scattered behind cards & header */}
-        <FloatingOatItem
-          top="14%"
-          left="7%"
-          size={42}
-          rotation={-25}
-          animationClass="jacral-drift"
-        />
-        <FloatingLeafItem
-          top="11%"
-          right="8%"
-          size={38}
-          rotation={32}
-          animationClass="jacral-float-slow"
-        />
-        <FloatingCerealPiece
-          top="18%"
-          right="12%"
-          size={16}
-          rotation={15}
-          animationClass="jacral-float-medium"
-        />
-        <FloatingOatItem
-          top="26%"
-          left="3%"
-          size={36}
-          rotation={40}
-          animationClass="jacral-float-medium"
-        />
-        <FloatingLeafItem
-          top="33%"
-          left="5%"
-          size={44}
-          rotation={-18}
-          animationClass="jacral-float-slow"
-        />
-        <FloatingCerealPiece
-          top="30%"
-          right="4%"
-          size={18}
-          rotation={-22}
-          animationClass="jacral-drift"
-        />
-        <FloatingOatItem
-          top="38%"
-          right="6%"
-          size={32}
-          rotation={28}
-          animationClass="jacral-float-slow"
-        />
-        <FloatingLeafItem
-          top="46%"
-          right="2%"
-          size={46}
-          rotation={-35}
-          animationClass="jacral-float-medium"
+        {/* Green ambient glow — top-right */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: "600px",
+            height: "500px",
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse at 80% 20%, rgba(49,94,66,0.08) 0%, transparent 65%)",
+          }}
         />
 
-        {/* Lower area accents */}
-        <FloatingOatItem
-          top="66%"
-          left="3%"
-          size={34}
-          rotation={-15}
-          animationClass="jacral-drift"
+        {/* Red accent glow — top-center */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-100px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "400px",
+            height: "300px",
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse, rgba(192,68,34,0.05) 0%, transparent 70%)",
+          }}
         />
-        <FloatingLeafItem
-          top="71%"
-          left="4%"
-          size={40}
-          rotation={22}
-          animationClass="jacral-float-slow"
+
+        {/* =======================================================
+            LARGE JACKFRUIT CROSS-SECTION — LEFT SIDE (hero)
+            ======================================================= */}
+
+        <img
+          src="/images/floating_jackfruit.png"
+          alt=""
+          className="jacral-float-slow"
+          style={{
+            position: "absolute",
+            left: "-110px",
+            bottom: "-60px",
+            width: "520px",
+            height: "520px",
+            objectFit: "contain",
+            opacity: 0.96,
+            filter: "drop-shadow(0 20px 40px rgba(60,80,10,0.22))",
+          }}
         />
-        <FloatingCerealPiece
-          top="63%"
-          right="8%"
-          size={15}
-          rotation={45}
-          animationClass="jacral-float-medium"
+
+        {/* =======================================================
+            JACKFRUIT SHELL — RIGHT SIDE (upper)
+            ======================================================= */}
+
+        <img
+          src="/images/jackfruit_shell.png"
+          alt=""
+          className="jacral-float-medium"
+          style={{
+            position: "absolute",
+            right: "-50px",
+            top: "40px",
+            width: "290px",
+            height: "290px",
+            objectFit: "contain",
+            opacity: 0.90,
+            filter: "drop-shadow(0 14px 30px rgba(60,80,10,0.18))",
+            transform: "rotate(10deg)",
+          }}
         />
-        <FloatingOatItem
-          top="74%"
-          right="5%"
-          size={38}
-          rotation={-20}
-          animationClass="jacral-drift"
+
+        {/* =======================================================
+            JACKFRUIT PODS — SCATTERED
+            ======================================================= */}
+
+        {/* Pod — top-left */}
+        <img
+          src="/images/jackfruit_pod.png"
+          alt=""
+          className="jacral-drift"
+          style={{
+            position: "absolute",
+            left: "6%",
+            top: "16%",
+            width: "110px",
+            height: "110px",
+            objectFit: "contain",
+            opacity: 0.90,
+            filter: "drop-shadow(0 8px 18px rgba(80,50,0,0.18))",
+            transform: "rotate(-20deg)",
+          }}
         />
-        <FloatingLeafItem
-          top="82%"
-          right="6%"
-          size={48}
-          rotation={25}
-          animationClass="jacral-float-slow"
+
+        {/* Pod — top-right */}
+        <img
+          src="/images/jackfruit_pod.png"
+          alt=""
+          className="jacral-float-medium"
+          style={{
+            position: "absolute",
+            right: "9%",
+            top: "26%",
+            width: "88px",
+            height: "88px",
+            objectFit: "contain",
+            opacity: 0.85,
+            filter: "drop-shadow(0 6px 14px rgba(80,50,0,0.16))",
+            transform: "rotate(22deg) scaleX(-1)",
+          }}
+        />
+
+        {/* Pod — bottom-right */}
+        <img
+          src="/images/jackfruit_pod.png"
+          alt=""
+          className="jacral-float-slow"
+          style={{
+            position: "absolute",
+            right: "4%",
+            bottom: "16%",
+            width: "95px",
+            height: "95px",
+            objectFit: "contain",
+            opacity: 0.80,
+            filter: "drop-shadow(0 7px 15px rgba(80,50,0,0.15))",
+            transform: "rotate(38deg)",
+          }}
+        />
+
+        {/* =======================================================
+            TROPICAL LEAVES
+            ======================================================= */}
+
+        {/* Leaf — bottom-left */}
+        <img
+          src="/images/tropical_leaf.png"
+          alt=""
+          className="jacral-float-medium"
+          style={{
+            position: "absolute",
+            left: "7%",
+            bottom: "9%",
+            width: "135px",
+            height: "135px",
+            objectFit: "contain",
+            opacity: 0.88,
+            filter: "drop-shadow(0 8px 18px rgba(30,80,40,0.18))",
+            transform: "rotate(-25deg)",
+          }}
+        />
+
+        {/* Leaf — right lower */}
+        <img
+          src="/images/tropical_leaf.png"
+          alt=""
+          className="jacral-float-slow"
+          style={{
+            position: "absolute",
+            right: "6%",
+            bottom: "22%",
+            width: "112px",
+            height: "112px",
+            objectFit: "contain",
+            opacity: 0.82,
+            filter: "drop-shadow(0 7px 16px rgba(30,80,40,0.15))",
+            transform: "rotate(20deg) scaleX(-1)",
+          }}
+        />
+
+        {/* Leaf — left mid */}
+        <img
+          src="/images/tropical_leaf.png"
+          alt=""
+          className="jacral-drift"
+          style={{
+            position: "absolute",
+            left: "14%",
+            top: "38%",
+            width: "70px",
+            height: "70px",
+            objectFit: "contain",
+            opacity: 0.72,
+            filter: "drop-shadow(0 5px 10px rgba(30,80,40,0.14))",
+            transform: "rotate(10deg)",
+          }}
+        />
+
+        {/* Leaf — top-right small */}
+        <img
+          src="/images/tropical_leaf.png"
+          alt=""
+          className="jacral-float-medium"
+          style={{
+            position: "absolute",
+            right: "15%",
+            top: "10%",
+            width: "75px",
+            height: "75px",
+            objectFit: "contain",
+            opacity: 0.70,
+            filter: "drop-shadow(0 5px 10px rgba(30,80,40,0.12))",
+            transform: "rotate(-15deg) scaleX(-1)",
+          }}
+        />
+
+        {/* =======================================================
+            OAT GRAIN CLUSTERS
+            ======================================================= */}
+
+        <img
+          src="/images/oat_grains.png"
+          alt=""
+          className="jacral-drift"
+          style={{
+            position: "absolute",
+            left: "18%",
+            top: "18%",
+            width: "100px",
+            height: "100px",
+            objectFit: "contain",
+            opacity: 0.85,
+            filter: "drop-shadow(0 4px 8px rgba(100,70,20,0.14))",
+            transform: "rotate(-15deg)",
+          }}
+        />
+
+        <img
+          src="/images/oat_grains.png"
+          alt=""
+          className="jacral-float-medium"
+          style={{
+            position: "absolute",
+            right: "17%",
+            top: "22%",
+            width: "82px",
+            height: "82px",
+            objectFit: "contain",
+            opacity: 0.80,
+            filter: "drop-shadow(0 3px 7px rgba(100,70,20,0.12))",
+            transform: "rotate(18deg)",
+          }}
+        />
+
+        <img
+          src="/images/oat_grains.png"
+          alt=""
+          className="jacral-float-slow"
+          style={{
+            position: "absolute",
+            right: "3%",
+            bottom: "7%",
+            width: "90px",
+            height: "90px",
+            objectFit: "contain",
+            opacity: 0.75,
+            filter: "drop-shadow(0 4px 8px rgba(100,70,20,0.12))",
+            transform: "rotate(32deg)",
+          }}
+        />
+
+        <img
+          src="/images/oat_grains.png"
+          alt=""
+          className="jacral-float-medium"
+          style={{
+            position: "absolute",
+            left: "27%",
+            bottom: "9%",
+            width: "72px",
+            height: "72px",
+            objectFit: "contain",
+            opacity: 0.70,
+            filter: "drop-shadow(0 3px 6px rgba(100,70,20,0.11))",
+            transform: "rotate(-30deg)",
+          }}
+        />
+
+        {/* =======================================================
+            SMALL ACCENT DOTS
+            ======================================================= */}
+
+        <span
+          className="
+            jacral-pulse
+            absolute
+            left-[23%]
+            top-[12%]
+            h-4
+            w-4
+            rounded-full
+            bg-[#B9C86E]
+          "
+        />
+
+        <span
+          className="
+            jacral-pulse
+            absolute
+            right-[24%]
+            top-[14%]
+            h-3
+            w-3
+            rounded-full
+            bg-[#E4A55D]
+          "
+        />
+
+        <span
+          className="
+            absolute
+            left-[16%]
+            bottom-[26%]
+            h-3
+            w-3
+            rotate-45
+            rounded-[35%]
+            bg-[#D9A64C]/50
+          "
+        />
+
+        <span
+          className="
+            absolute
+            right-[18%]
+            bottom-[28%]
+            h-4
+            w-4
+            rotate-[-20deg]
+            rounded-full
+            bg-[#3B6D4D]/25
+          "
         />
       </div>
 
       {/* =========================================================
-          1. DARK GREEN BENEFITS BAR (FULL WIDTH)
+          GREEN BENEFIT STRIP (FULL WIDTH, TOUCHING HERO)
           ========================================================= */}
+
       <div
-        className="relative z-30 w-full border-b border-[#183B25] bg-[#1F462D] text-[#F4EFE6] shadow-[0_4px_16px_rgba(20,50,30,0.14)]"
+        className="
+          relative
+          z-30
+          w-full
+          m-0
+          overflow-hidden
+          border-y
+          border-[#1E482E]
+          bg-[#285B3C]
+          shadow-[0_4px_20px_rgba(20,50,30,0.18)]
+        "
       >
-        <div className="mx-auto flex w-full max-w-[1440px] flex-col divide-y divide-[#356B48]/40 sm:flex-row sm:divide-x sm:divide-y-0">
+        {/* Decorative leaves on strip */}
+
+        <svg
+          className="
+            pointer-events-none
+            absolute
+            -left-2
+            top-1/2
+            h-12
+            w-16
+            -translate-y-1/2
+            opacity-80
+          "
+          viewBox="0 0 80 50"
+          fill="none"
+        >
+          <path
+            d="M4 40C24 26 40 17 72 7"
+            stroke="#D8E3A2"
+            strokeWidth="1.5"
+          />
+
+          <ellipse
+            cx="18"
+            cy="30"
+            rx="6"
+            ry="13"
+            transform="rotate(-38 18 30)"
+            fill="#9DB54A"
+          />
+
+          <ellipse
+            cx="35"
+            cy="22"
+            rx="6"
+            ry="13"
+            transform="rotate(-42 35 22)"
+            fill="#789B39"
+          />
+        </svg>
+
+        <svg
+          className="
+            pointer-events-none
+            absolute
+            -right-2
+            top-1/2
+            h-12
+            w-16
+            -translate-y-1/2
+            -scale-x-100
+            opacity-80
+          "
+          viewBox="0 0 80 50"
+          fill="none"
+        >
+          <path
+            d="M4 40C24 26 40 17 72 7"
+            stroke="#D8E3A2"
+            strokeWidth="1.5"
+          />
+
+          <ellipse
+            cx="18"
+            cy="30"
+            rx="6"
+            ry="13"
+            transform="rotate(-38 18 30)"
+            fill="#9DB54A"
+          />
+
+          <ellipse
+            cx="35"
+            cy="22"
+            rx="6"
+            ry="13"
+            transform="rotate(-42 35 22)"
+            fill="#789B39"
+          />
+        </svg>
+
+        <div
+          className="
+            mx-auto
+            flex
+            min-h-[64px]
+            w-full
+            max-w-[1500px]
+            flex-col
+            items-stretch
+            lg:flex-row
+          "
+        >
           <BenefitItem
-            icon={<Truck size={17} strokeWidth={1.8} className="text-[#E5E8C7]" />}
+            icon={<Truck size={19} />}
             text="FAST & RELIABLE DELIVERY"
           />
+
           <BenefitItem
-            icon={<Leaf size={17} strokeWidth={1.8} className="text-[#E5E8C7]" />}
+            icon={<Leaf size={20} />}
             text="100% NATURAL INGREDIENTS"
           />
+
           <BenefitItem
-            icon={<ShieldCheck size={17} strokeWidth={1.8} className="text-[#E5E8C7]" />}
+            icon={<ShieldCheck size={20} />}
             text="SAFE & SECURE PAYMENTS"
           />
+
           <BenefitItem
-            icon={<Heart size={17} strokeWidth={1.8} className="text-[#E5E8C7]" />}
+            icon={<Heart size={20} />}
             text="HEALTHY CHOICES FOR YOU"
+            last
           />
         </div>
       </div>
 
       {/* =========================================================
-          MAIN SECTION CONTAINER
+          PRODUCT SECTION
           ========================================================= */}
-      <div className="relative z-20 mx-auto w-full max-w-[1280px] px-4 pb-20 pt-14 sm:px-6 sm:pb-24 sm:pt-16 lg:px-8 lg:pb-28 lg:pt-20">
-        
+
+      <div
+        className="
+          relative
+          z-10
+          mx-auto
+          max-w-[1450px]
+          px-5
+          pb-24
+          pt-20
+          sm:px-8
+          sm:pb-28
+          sm:pt-24
+          lg:px-12
+          lg:pb-32
+          lg:pt-24
+        "
+      >
         {/* =======================================================
-            2. OUR PRODUCTS HEADING
+            HEADING
             ======================================================= */}
-        <div className="relative z-20 mb-10 text-center sm:mb-14">
-          {/* Decorative leaf emblem: — 🌿 — */}
-          <div className="mb-4 flex items-center justify-center gap-4 sm:mb-5 sm:gap-5">
-            <span className="h-px w-12 bg-[#28543C]/40 sm:w-16" />
-            <Leaf size={18} strokeWidth={1.6} className="text-[#28543C]" />
-            <span className="h-px w-12 bg-[#28543C]/40 sm:w-16" />
+
+        <div
+          className="
+            jacral-reveal
+            relative
+            z-20
+            mb-14
+            text-center
+            sm:mb-16
+            lg:mb-20
+          "
+        >
+          <div
+            className="
+              mb-5
+              flex
+              items-center
+              justify-center
+              gap-5
+            "
+          >
+            <span
+              className="
+                h-px
+                w-12
+                bg-[#315E42]/45
+                sm:w-16
+              "
+            />
+
+            <Leaf
+              size={20}
+              strokeWidth={1.4}
+              className="text-[#315E42]"
+            />
+
+            <span
+              className="
+                h-px
+                w-12
+                bg-[#315E42]/45
+                sm:w-16
+              "
+            />
           </div>
 
           <h2
-            className="text-[#28543C]"
             style={{
               fontFamily: '"Playfair Display", Georgia, serif',
-              fontSize: "clamp(38px, 6vw, 68px)",
-              lineHeight: 1.05,
-              letterSpacing: "-0.03em",
+              fontSize: 'clamp(44px, 7vw, 80px)',
+              fontWeight: 700,
+              lineHeight: 1,
+              letterSpacing: '-0.04em',
+              color: '#28543C',
             }}
           >
-            <span style={{ fontStyle: "italic", fontWeight: 400 }}>OUR </span>
+            <span style={{ fontStyle: 'italic', fontWeight: 400 }}>OUR </span>
             <span style={{ fontWeight: 900 }}>PRODUCTS</span>
           </h2>
         </div>
 
         {/* =======================================================
-            3. TWO PRODUCT CARDS (SIDE-BY-SIDE ON DESKTOP)
+            TWO PRODUCTS
             ======================================================= */}
+
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-10">
-            <div className="h-[520px] animate-pulse rounded-[28px] border border-[#E6DFC7] bg-[#FAF6ED]/80" />
-            <div className="h-[520px] animate-pulse rounded-[28px] border border-[#E6DFC7] bg-[#FAF6ED]/80" />
+          <div
+            className="
+              mx-auto
+              grid
+              max-w-[1050px]
+              grid-cols-1
+              gap-8
+              lg:grid-cols-2
+            "
+          >
+            <ProductSkeleton />
+            <ProductSkeleton />
           </div>
-        ) : featuredTwo.length > 0 ? (
-          <div className="grid grid-cols-1 items-stretch gap-8 md:grid-cols-2 lg:gap-10">
-            {featuredTwo.map((product) => (
-              <div key={product.id} className="h-full">
-                <ProductCard product={product} variant="featured" />
+        ) : activeProducts.length > 0 ? (
+          <div
+            className="
+              relative
+              mx-auto
+              grid
+              max-w-[1050px]
+              grid-cols-1
+              gap-8
+              lg:grid-cols-2
+              lg:gap-10
+            "
+          >
+            {/* Product 1 */}
+
+            {activeProducts[0] && (
+              <div
+                className="
+                  jacral-reveal
+                  relative
+                "
+                style={{
+                  animationDelay: "150ms",
+                }}
+              >
+                <ProductCard
+                  product={activeProducts[0]}
+                />
               </div>
-            ))}
+            )}
+
+            {/* Product 2 */}
+
+            {activeProducts[1] && (
+              <div
+                className="
+                  jacral-reveal
+                  relative
+                "
+                style={{
+                  animationDelay: "300ms",
+                }}
+              >
+                <ProductCard
+                  product={activeProducts[1]}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <div className="rounded-[28px] border border-[#E6DFC7] bg-[#FAF6ED] p-12 text-center text-[#5A524A]">
-            <p>Products are currently loading from the catalog...</p>
+          <div
+            className="
+              mx-auto
+              max-w-xl
+              rounded-[28px]
+              border
+              border-[#D8CDBA]
+              bg-white/60
+              px-8
+              py-16
+              text-center
+            "
+          >
+            <Sparkles
+              size={30}
+              className="
+                mx-auto
+                text-[#315E42]/60
+              "
+            />
+
+            <p
+              className="
+                mt-4
+                text-sm
+                text-[#71675D]
+              "
+            >
+              Products added from the Admin Panel
+              will appear here.
+            </p>
           </div>
         )}
 
         {/* =======================================================
-            5. FITNESS CHARACTER / NATURAL GOODNESS AREA
-            (SAME VERTICAL COMPOSITION, CREAM/BEIGE BACKGROUND)
+            BOTTOM DECORATIVE LINE
             ======================================================= */}
-        <div className="relative mx-auto max-w-[1180px]">
-          <div className="grid grid-cols-1 items-end gap-6 lg:grid-cols-12 lg:gap-8">
-            
-            {/* ---------------------------------------------------
-                LOWER LEFT: SINGLE ANIMATED ATHLETE CHARACTER
-                Cycles through 3 consistent poses (1 at a time)
-                --------------------------------------------------- */}
-            <div className="order-1 flex justify-center lg:col-span-5 lg:justify-start">
-              <div className="relative w-full max-w-[420px]">
-                <MascotPoseCarousel />
-              </div>
-            </div>
 
-            {/* ---------------------------------------------------
-                RIGHT SIDE:
-                NATURAL GOODNESS HEADING (TOP)
-                + PRODUCTS ON WOODEN SERVING BOARD (BOTTOM)
-                --------------------------------------------------- */}
-            <div className="order-2 flex flex-col items-center text-center lg:col-span-7 lg:items-end lg:text-right">
-              
-              {/* Natural Goodness Typography */}
-              <div className="mb-6 w-full lg:mb-8">
-                <div className="mb-3 flex items-center justify-center gap-3 lg:justify-end">
-                  <span className="h-px w-10 bg-[#28543C]/40" />
-                  <Leaf size={16} strokeWidth={1.6} className="text-[#28543C]" />
-                  <span className="h-px w-10 bg-[#28543C]/40" />
-                </div>
+        <div
+          className="
+            mx-auto
+            mt-16
+            flex
+            max-w-[850px]
+            items-center
+            gap-4
+          "
+        >
+          <span
+            style={{
+              flex: 1,
+              height: '1px',
+              background: 'linear-gradient(90deg, transparent, #C4B090)',
+            }}
+          />
 
-                <h3
-                  className="text-[#28543C]"
-                  style={{
-                    fontFamily: '"Playfair Display", Georgia, serif',
-                    fontSize: "clamp(30px, 4.4vw, 54px)",
-                    fontWeight: 900,
-                    lineHeight: 1.08,
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  NATURAL GOODNESS
-                </h3>
-
-                <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[#28543C] sm:text-[13px]">
-                  HEALTHY YOU &nbsp;•&nbsp; BETTER TOMORROW
-                </p>
-              </div>
-
-              {/* Wooden Serving Board with JACRAL Products */}
-              <div className="relative w-full overflow-hidden rounded-[24px]">
-                <img
-                  src="/images/products_serving_board_clean.jpg"
-                  alt="JACRAL Oats Apple Cinnamon and Dark Chocolate displayed on a rustic wooden board with real apples, cinnamon, and chocolate"
-                  className="h-auto w-full object-contain transition-transform duration-700 ease-out hover:scale-[1.02]"
-                  style={{
-                    filter: "drop-shadow(0 14px 28px rgba(40,30,10,0.12))",
-                  }}
-                />
-              </div>
-            </div>
-
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <Leaf
+              size={13}
+              strokeWidth={1.4}
+              style={{ color: '#315E42', opacity: 0.7 }}
+            />
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                letterSpacing: '0.24em',
+                textTransform: 'uppercase',
+                color: '#74695F',
+              }}
+            >
+              JACRAL
+            </span>
+            <span style={{ color: '#C04422', opacity: 0.7, fontSize: '11px' }}>·</span>
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                letterSpacing: '0.24em',
+                textTransform: 'uppercase',
+                color: '#74695F',
+              }}
+            >
+              NATURALLY CRAFTED
+            </span>
           </div>
-        </div>
 
+          <span
+            style={{
+              flex: 1,
+              height: '1px',
+              background: 'linear-gradient(90deg, #C4B090, transparent)',
+            }}
+          />
+        </div>
       </div>
     </section>
   );
 }
 
 /* ================================================================
-   MASCOT POSE CAROUSEL (3 POSES CYCLING ONE AT A TIME)
-   Pose 1: Presenting with both hands
-   Pose 2: Changes posture, gestures with one hand
-   Pose 3: Energetic healthy/fitness pose (thumbs-up / pointing)
-   ================================================================ */
-
-function MascotPoseCarousel() {
-  const [activeIdx, setActiveIdx] = useState(0);
-
-  useEffect(() => {
-    // 4.2 second interval between pose transitions
-    const interval = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % MASCOT_POSES.length);
-    }, 4200);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div
-      className="relative mx-auto w-full max-w-[390px]"
-      style={{ aspectRatio: "3/4" }}
-    >
-      {MASCOT_POSES.map((pose, index) => {
-        const isActive = index === activeIdx;
-        return (
-          <img
-            key={pose.src}
-            src={pose.src}
-            alt={pose.alt}
-            className={`absolute inset-0 h-full w-full object-contain transition-all duration-1000 ease-in-out ${
-              isActive
-                ? "scale-100 opacity-100"
-                : "scale-[0.985] opacity-0 pointer-events-none"
-            }`}
-            style={{
-              mixBlendMode: "multiply",
-              filter: "drop-shadow(0 8px 24px rgba(30,60,30,0.18))",
-            }}
-          />
-        );
-      })}
-
-      {/* Subtle indicator dots */}
-      <div className="absolute bottom-2 left-4 z-10 flex items-center gap-1.5 opacity-60 transition-opacity hover:opacity-100">
-        {MASCOT_POSES.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            aria-label={`Switch to pose ${i + 1}`}
-            onClick={() => setActiveIdx(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === activeIdx ? "w-5 bg-[#28543C]" : "w-1.5 bg-[#28543C]/40"
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ================================================================
-   BENEFIT ITEM (FOR 1. BENEFITS BAR)
+   BENEFIT ITEM
    ================================================================ */
 
 function BenefitItem({
   icon,
   text,
+  last = false,
 }: {
   icon: ReactNode;
   text: string;
+  last?: boolean;
 }) {
   return (
-    <div className="flex flex-1 items-center justify-center gap-2.5 px-3 py-3 text-center sm:px-4 sm:py-3.5">
-      <span className="shrink-0">{icon}</span>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#F4EFE6] sm:text-[11px]">
+    <div
+      className={`
+        flex
+        flex-1
+        items-center
+        justify-center
+        gap-3
+        px-5
+        py-4
+        text-center
+        ${!last
+          ? "border-b border-[#8BA18D]/30 lg:border-b-0 lg:border-r"
+          : ""
+        }
+      `}
+    >
+      <span
+        className="
+          shrink-0
+          text-[#E5E8C7]
+        "
+      >
+        {icon}
+      </span>
+
+      <span
+        className="
+          text-[9px]
+          font-semibold
+          uppercase
+          tracking-[0.17em]
+          text-[#F4F0DF]
+          sm:text-[10px]
+        "
+      >
         {text}
       </span>
     </div>
@@ -491,110 +945,142 @@ function BenefitItem({
 }
 
 /* ================================================================
-   CODED FLOATING DECORATIVE PARTICLES (LEAVES, OATS, CEREAL)
+   CODED OAT CLUSTER
    ================================================================ */
 
-function FloatingOatItem({
-  top,
-  left,
-  right,
-  size,
-  rotation,
-  animationClass,
+function OatCluster({
+  className = "",
 }: {
-  top: string;
-  left?: string;
-  right?: string;
-  size: number;
-  rotation: number;
-  animationClass: string;
+  className?: string;
 }) {
   return (
-    <div
-      className={`absolute ${animationClass} pointer-events-none opacity-80`}
-      style={{
-        top,
-        left,
-        right,
-        width: `${size}px`,
-        height: `${size}px`,
-        transform: `rotate(${rotation}deg)`,
-      }}
+    <svg
+      className={className}
+      viewBox="0 0 100 100"
+      fill="none"
     >
-      <img
-        src="/images/oat_grains.png"
-        alt=""
-        className="h-full w-full object-contain"
-        style={{ filter: "drop-shadow(0 3px 6px rgba(100,70,20,0.14))" }}
+      <path
+        d="M49 91C49 66 50 39 52 10"
+        stroke="#A77B40"
+        strokeWidth="2"
+        strokeLinecap="round"
       />
-    </div>
+
+      <ellipse
+        cx="37"
+        cy="70"
+        rx="7"
+        ry="16"
+        transform="rotate(-35 37 70)"
+        fill="#D1A762"
+      />
+
+      <ellipse
+        cx="61"
+        cy="61"
+        rx="7"
+        ry="16"
+        transform="rotate(35 61 61)"
+        fill="#C59650"
+      />
+
+      <ellipse
+        cx="39"
+        cy="49"
+        rx="7"
+        ry="15"
+        transform="rotate(-35 39 49)"
+        fill="#DAB56F"
+      />
+
+      <ellipse
+        cx="62"
+        cy="39"
+        rx="7"
+        ry="15"
+        transform="rotate(35 62 39)"
+        fill="#C79A58"
+      />
+
+      <ellipse
+        cx="45"
+        cy="27"
+        rx="6"
+        ry="13"
+        transform="rotate(-30 45 27)"
+        fill="#D7B16C"
+      />
+
+      <ellipse
+        cx="60"
+        cy="17"
+        rx="5"
+        ry="11"
+        transform="rotate(27 60 17)"
+        fill="#C59650"
+      />
+    </svg>
   );
 }
 
-function FloatingLeafItem({
-  top,
-  left,
-  right,
-  size,
-  rotation,
-  animationClass,
+/* ================================================================
+   CODED LEAF BRANCH
+   ================================================================ */
+
+function LeafBranch({
+  className = "",
 }: {
-  top: string;
-  left?: string;
-  right?: string;
-  size: number;
-  rotation: number;
-  animationClass: string;
+  className?: string;
 }) {
   return (
-    <div
-      className={`absolute ${animationClass} pointer-events-none opacity-75`}
-      style={{
-        top,
-        left,
-        right,
-        width: `${size}px`,
-        height: `${size}px`,
-        transform: `rotate(${rotation}deg)`,
-      }}
+    <svg
+      className={className}
+      viewBox="0 0 100 100"
+      fill="none"
     >
-      <img
-        src="/images/tropical_leaf.png"
-        alt=""
-        className="h-full w-full object-contain"
-        style={{ filter: "drop-shadow(0 4px 8px rgba(30,80,40,0.15))" }}
+      <path
+        d="M14 88C30 63 52 39 84 14"
+        stroke="#315E42"
+        strokeWidth="2"
+        strokeLinecap="round"
       />
-    </div>
+
+      <path
+        d="M31 63C18 59 12 49 13 38C25 39 34 47 36 56"
+        fill="#70964D"
+        opacity=".7"
+      />
+
+      <path
+        d="M47 46C38 37 38 26 43 17C54 22 59 31 56 40"
+        fill="#86A85B"
+        opacity=".65"
+      />
+
+      <path
+        d="M63 32C65 20 74 13 85 11C84 23 77 31 68 37"
+        fill="#5E8A48"
+        opacity=".7"
+      />
+    </svg>
   );
 }
 
-function FloatingCerealPiece({
-  top,
-  left,
-  right,
-  size,
-  rotation,
-  animationClass,
-}: {
-  top: string;
-  left?: string;
-  right?: string;
-  size: number;
-  rotation: number;
-  animationClass: string;
-}) {
+/* ================================================================
+   LOADING SKELETON
+   ================================================================ */
+
+function ProductSkeleton() {
   return (
-    <span
-      className={`absolute ${animationClass} pointer-events-none rounded-[30%] bg-[#D4A35B]/70`}
-      style={{
-        top,
-        left,
-        right,
-        width: `${size}px`,
-        height: `${size}px`,
-        transform: `rotate(${rotation}deg)`,
-        boxShadow: "0 2px 5px rgba(120,80,20,0.18)",
-      }}
+    <div
+      className="
+        h-[650px]
+        animate-pulse
+        rounded-[30px]
+        border
+        border-[#DED2BE]
+        bg-white/60
+      "
     />
   );
 }

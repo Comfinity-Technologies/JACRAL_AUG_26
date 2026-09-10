@@ -1,5 +1,5 @@
 import type { Product } from "../../types/product";
-import { Heart, Leaf, ShoppingBag, Star, Truck } from "lucide-react";
+import { ArrowRight, Leaf, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { getImageUrl } from "../../utils/image";
@@ -10,7 +10,6 @@ export type ProductCardItem = Product | {
   name: string;
   description?: string;
   price: number | string;
-  discount_price?: number | string | null;
   stock: number;
   featured?: boolean;
   badge?: string;
@@ -24,17 +23,11 @@ export type ProductCardItem = Product | {
 export interface ProductCardProps {
   product: ProductCardItem;
   onAddToCart?: () => Promise<void> | void;
-  variant?: "default" | "featured";
 }
 
-export default function ProductCard({
-  product,
-  onAddToCart,
-  variant = "default",
-}: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const { addToCart } = useCart();
   const [hovered, setHovered] = useState(false);
-  const [wishlisted, setWishlisted] = useState(false);
 
   const primaryImage = product.image_url
     ? getImageUrl(product.image_url)
@@ -47,16 +40,6 @@ export default function ProductCard({
   const isOutOfStock = Number(product.stock) <= 0;
   const productUrl = `/product/${product.id}`;
 
-  const price = Number(product.price);
-  const discountPrice =
-    (product as any).discount_price != null
-      ? Number((product as any).discount_price)
-      : null;
-  const hasDiscount = discountPrice != null && discountPrice < price;
-  const discountPct = hasDiscount
-    ? Math.round(((price - discountPrice!) / price) * 100)
-    : 0;
-
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
     if (onAddToCart) {
@@ -66,282 +49,512 @@ export default function ProductCard({
     }
   };
 
-  if (variant === "featured") {
-    return (
-      <article
-        className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[#E6DFC7] bg-[#FAF6ED] p-4 transition-all duration-300 hover:shadow-[0_20px_45px_rgba(40,60,30,0.12)] sm:p-5"
-        style={{
-          boxShadow: "0 10px 30px rgba(40, 60, 30, 0.07)",
-        }}
-      >
-        {/* ============================================================
-            IMAGE ZONE — rounded cream container with badge
-            ============================================================ */}
-        <Link
-          to={productUrl}
-          className="relative block w-full overflow-hidden rounded-[20px]"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          tabIndex={-1}
-        >
-          <div
-            className="relative flex aspect-[4/3.8] w-full items-center justify-center overflow-hidden rounded-[20px]"
-            style={{
-              background:
-                "linear-gradient(160deg, #FBF7EE 0%, #F5EEDB 55%, #EBE1CB 100%)",
-            }}
-          >
-            {/* Top-left pill badge: leaf icon + product.badge or JACRAL OATS */}
-            <div className="absolute left-3.5 top-3.5 z-10 flex items-center gap-1.5 rounded-full bg-[#D7E6D9] px-3 py-1.5 shadow-sm">
-              <Leaf size={12} strokeWidth={2.2} className="text-[#28543C]" />
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#28543C]">
-                {product.badge || "JACRAL OATS"}
-              </span>
-            </div>
-
-            {primaryImage ? (
-              <div className="relative flex h-full w-full items-center justify-center p-3">
-                <img
-                  src={primaryImage}
-                  alt={product.name}
-                  className={`h-full w-full object-contain transition-opacity duration-500 ease-in-out ${
-                    hovered && hoverImage ? "opacity-0" : "opacity-100"
-                  }`}
-                />
-                {hoverImage && (
-                  <img
-                    src={hoverImage}
-                    alt={product.name}
-                    className={`absolute inset-0 m-auto h-full w-full object-contain transition-opacity duration-500 ease-in-out ${
-                      hovered ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                )}
-              </div>
-            ) : (
-              <div
-                className="flex h-24 w-24 items-center justify-center rounded-full text-white"
-                style={{ background: "linear-gradient(135deg, #28543C, #1E3D28)" }}
-              >
-                <Leaf size={36} strokeWidth={1.4} />
-              </div>
-            )}
-          </div>
-        </Link>
-
-        {/* ============================================================
-            CONTENT ZONE — label, title, description, buttons (NO PRICE)
-            ============================================================ */}
-        <div className="flex flex-1 flex-col pt-4 sm:pt-5">
-          {/* Sub-label */}
-          <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#A66B38]">
-            <span>—</span>
-            <span>{product.badge || "JACRAL OATS"}</span>
-          </div>
-
-          {/* Product Name */}
-          <Link to={productUrl} className="no-underline">
-            <h3
-              className="mb-2 text-[22px] font-black uppercase leading-tight text-[#28543C] transition-colors group-hover:text-[#1F462D] sm:text-[26px]"
-              style={{
-                fontFamily: '"Playfair Display", Georgia, serif',
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {product.name}
-            </h3>
-          </Link>
-
-          {/* Product Description */}
-          <p className="mb-5 line-clamp-2 min-h-[40px] text-[13px] leading-relaxed text-[#5A524A] sm:text-[14px]">
-            {product.description ||
-              "Wholesome oats blended with 100% natural ingredients for a healthy delicious treat."}
-          </p>
-
-          {/* Action Buttons Row — DETAILS + SHOP NOW */}
-          <div className="mt-auto flex items-center gap-3 pt-2">
-            <Link
-              to={productUrl}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#28543C] bg-[#FAF6ED] px-4 py-2.5 text-center text-[11px] font-extrabold uppercase tracking-wider text-[#28543C] transition-all duration-200 hover:scale-[1.02] hover:bg-[#F0E8D0] active:scale-[0.98] sm:text-[12px]"
-            >
-              <span>DETAILS</span>
-              <span className="text-sm">→</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#84B440] px-4 py-2.5 text-center text-[11px] font-black uppercase tracking-wider text-black shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-[#75A236] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:text-[12px]"
-            >
-              <ShoppingBag size={14} strokeWidth={2.4} className="text-black" />
-              <span className="text-black font-black">{isOutOfStock ? "SOLD OUT" : "SHOP NOW"}</span>
-            </button>
-          </div>
-        </div>
-      </article>
-    );
-  }
-
   return (
     <>
+      {/* ============================================================
+          PER-CARD KEYFRAMES
+          ============================================================ */}
       <style>{`
-        @keyframes pcFadeUp {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
+        @keyframes imgLevitate {
+          0%, 100% {
+            transform: perspective(700px) rotateX(4deg) rotateY(-6deg) translateY(0px) scale(1.04);
+            filter: drop-shadow(0 18px 28px rgba(80,40,10,0.30)) drop-shadow(0 6px 10px rgba(80,40,10,0.16));
+          }
+          50% {
+            transform: perspective(700px) rotateX(2deg) rotateY(4deg) translateY(-10px) scale(1.07);
+            filter: drop-shadow(0 28px 36px rgba(80,40,10,0.38)) drop-shadow(0 8px 14px rgba(80,40,10,0.22));
+          }
         }
-        @keyframes pcBadgePop {
-          0%   { transform: scale(0.7); opacity: 0; }
-          100% { transform: scale(1);   opacity: 1; }
+        @keyframes shimmer3D {
+          0%   { opacity: 0.0; transform: translateX(-120%) skewX(-15deg); }
+          50%  { opacity: 0.35; }
+          100% { opacity: 0.0; transform: translateX(220%) skewX(-15deg); }
         }
-        .pc-card       { animation: pcFadeUp .5s cubic-bezier(.22,1,.36,1) both; }
-        .pc-badge-pop  { animation: pcBadgePop .4s cubic-bezier(.22,1,.36,1) both; }
+        @keyframes badgePop {
+          0%   { transform: scale(0.75); opacity: 0; }
+          100% { transform: scale(1);    opacity: 1; }
+        }
+        @keyframes dotBlink {
+          0%, 100% { opacity: 0.6; transform: scale(1);   }
+          50%       { opacity: 1;   transform: scale(1.5); }
+        }
+        @keyframes groundShadowPulse {
+          0%, 100% { transform: translateX(-50%) scaleX(1);   opacity: 0.20; }
+          50%       { transform: translateX(-50%) scaleX(0.85); opacity: 0.30; }
+        }
+
+        .pc-img-levitate        { animation: imgLevitate         5.2s ease-in-out infinite; }
+        .pc-shimmer             { animation: shimmer3D            3.0s ease-in-out infinite 1.5s; }
+        .pc-badge-pop           { animation: badgePop             0.5s cubic-bezier(.22,1,.36,1) both; }
+        .pc-dot-blink           { animation: dotBlink             2.1s ease-in-out infinite; }
+        .pc-ground-shadow-pulse { animation: groundShadowPulse    5.2s ease-in-out infinite; }
+
         @media (prefers-reduced-motion: reduce) {
-          .pc-card, .pc-badge-pop { animation: none !important; }
+          .pc-img-levitate, .pc-shimmer, .pc-badge-pop,
+          .pc-dot-blink, .pc-ground-shadow-pulse {
+            animation: none !important;
+          }
         }
       `}</style>
 
       <article
-        className="pc-card group relative flex h-full flex-col overflow-hidden rounded-[26px] border border-[#E5DCDB] bg-white transition-shadow duration-300 hover:shadow-[0_16px_40px_rgba(60,40,20,0.12)]"
-        style={{ boxShadow: "0 4px 16px rgba(60,40,20,0.06)" }}
+        className="group relative flex h-full flex-col overflow-hidden"
+        style={{
+          borderRadius: "30px",
+          border: "1.5px solid rgba(196,156,110,0.35)",
+          background:
+            "linear-gradient(160deg, #FFFDF8 0%, #FBF4E6 60%, #F5EDD7 100%)",
+          boxShadow:
+            "0 8px 32px rgba(110,55,15,.09), 0 2px 8px rgba(110,55,15,.06), inset 0 1px 0 rgba(255,255,255,0.9)",
+          transition:
+            "transform 0.45s cubic-bezier(.22,1,.36,1), box-shadow 0.45s cubic-bezier(.22,1,.36,1)",
+          willChange: "transform",
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={(e) => {
+          setHovered(false);
+          e.currentTarget.style.transform = "perspective(900px) rotateY(0deg) rotateX(0deg) translateY(0px)";
+          e.currentTarget.style.boxShadow =
+            "0 8px 32px rgba(110,55,15,.09), 0 2px 8px rgba(110,55,15,.06), inset 0 1px 0 rgba(255,255,255,0.9)";
+        }}
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width - 0.5) * 14;
+          const y = ((e.clientY - rect.top) / rect.height - 0.5) * -10;
+          e.currentTarget.style.transform = `perspective(900px) rotateY(${x}deg) rotateX(${y}deg) translateY(-5px)`;
+          e.currentTarget.style.boxShadow = `${-x * 1.2}px ${22 + Math.abs(y * 1.5)}px 55px rgba(110,55,15,0.2), 0 4px 14px rgba(110,55,15,0.09), inset 0 1px 0 rgba(255,255,255,0.9)`;
+        }}
       >
         {/* ============================================================
-            IMAGE ZONE — contained image on a soft blending background
+            TOP IMAGE ZONE
             ============================================================ */}
         <Link
           to={productUrl}
           className="relative block"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+          style={{ padding: "20px 20px 0" }}
         >
+          {/* Rounded image container with warm 3D depth */}
           <div
-            className="relative flex aspect-[4/3.4] items-center justify-center overflow-hidden"
             style={{
+              position: "relative",
+              aspectRatio: "1.15 / 1",
+              borderRadius: "22px",
+              overflow: "hidden",
               background:
-                "linear-gradient(160deg, #FBF6EC 0%, #F2EBDC 55%, #E9E0CB 100%)",
+                "radial-gradient(ellipse at 38% 28%, #EFE3CA 0%, #E3D4B4 55%, #D5C49A 100%)",
+              boxShadow:
+                "inset 0 3px 18px rgba(90,50,10,.08), inset 0 -2px 10px rgba(90,50,10,.05)",
             }}
           >
+            {/* Warm amber glow — top right */}
+            <div
+              style={{
+                position: "absolute",
+                top: "-50px",
+                right: "-50px",
+                width: "210px",
+                height: "210px",
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle, rgba(210,142,60,0.35) 0%, transparent 68%)",
+                pointerEvents: "none",
+                transition: "transform 0.7s ease",
+                transform: hovered ? "scale(1.35)" : "scale(1)",
+              }}
+            />
+            {/* Green glow — bottom left */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-40px",
+                left: "-40px",
+                width: "170px",
+                height: "170px",
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle, rgba(49,94,66,0.28) 0%, transparent 68%)",
+                pointerEvents: "none",
+              }}
+            />
+            {/* Red accent glow — top center-right */}
+            <div
+              style={{
+                position: "absolute",
+                top: "15%",
+                right: "12%",
+                width: "90px",
+                height: "90px",
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle, rgba(192,68,34,0.18) 0%, transparent 68%)",
+                pointerEvents: "none",
+              }}
+            />
+
+            {/* ── PRODUCT IMAGE FROM ADMIN PANEL (3D levitating) ── */}
             {primaryImage ? (
-              <img
-                src={hovered && hoverImage ? hoverImage : primaryImage}
-                alt={product.name}
-                className="h-[82%] w-[82%] object-contain transition-transform duration-500 ease-out group-hover:scale-[1.05]"
-              />
+              <>
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <img
+                    src={hovered && hoverImage ? hoverImage : primaryImage}
+                    alt={product.name}
+                    className="pc-img-levitate"
+                    style={{
+                      width: "78%",
+                      height: "88%",
+                      objectFit: "contain",
+                      transition: "opacity 0.45s ease",
+                    }}
+                  />
+                </div>
+
+                {/* Ground shadow (synced with levitate) */}
+                <div
+                  className="pc-ground-shadow-pulse"
+                  style={{
+                    position: "absolute",
+                    bottom: "9px",
+                    left: "50%",
+                    width: "54%",
+                    height: "16px",
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(ellipse, rgba(80,40,10,0.22) 0%, transparent 72%)",
+                    pointerEvents: "none",
+                    filter: "blur(5px)",
+                  }}
+                />
+
+                {/* Shimmer reflection */}
+                <div
+                  className="pc-shimmer"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "38%",
+                    background:
+                      "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.52) 50%, transparent 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
+              </>
             ) : (
+              /* Fallback — no image */
               <div
-                className="flex h-24 w-24 items-center justify-center rounded-full text-white"
-                style={{ background: "linear-gradient(135deg, #315E42, #1E3D28)" }}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                <Leaf size={36} strokeWidth={1.2} />
+                <div
+                  className="pc-img-levitate"
+                  style={{
+                    width: "96px",
+                    height: "96px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #315E42, #1E3D28)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 14px 32px rgba(49,94,66,0.32)",
+                    color: "white",
+                  }}
+                >
+                  <Leaf size={40} strokeWidth={1.2} />
+                </div>
               </div>
             )}
 
-            {/* Badge — top-left */}
-            <div className="pc-badge-pop absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-1.5 shadow-sm">
-              {hasDiscount ? (
-                <span className="text-[11px] font-bold uppercase tracking-wide text-[#C04422]">
-                  -{discountPct}% off
-                </span>
-              ) : (
-                <>
-                  <Leaf size={11} strokeWidth={1.8} className="text-[#315E42]" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#315E42]">
-                    {product.badge || "Jacral"}
-                  </span>
-                </>
-              )}
+            {/* ── JACRAL OATS BADGE (top-left) ── */}
+            <div
+              className="pc-badge-pop"
+              style={{
+                position: "absolute",
+                top: "13px",
+                left: "13px",
+                zIndex: 20,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 13px",
+                borderRadius: "999px",
+                background: "rgba(247,240,226,0.94)",
+                border: "1px solid rgba(49,94,66,0.18)",
+                backdropFilter: "blur(8px)",
+                boxShadow: "0 4px 14px rgba(49,94,66,0.14)",
+              }}
+            >
+              <Leaf
+                size={11}
+                strokeWidth={1.6}
+                style={{ color: "#315E42", flexShrink: 0 }}
+              />
+              <span
+                style={{
+                  fontSize: "8px",
+                  fontWeight: 900,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "#315E42",
+                }}
+              >
+                {product.badge || "JACRAL OATS"}
+              </span>
             </div>
 
-            {/* Wishlist — top-right */}
-            <button
-              type="button"
-              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setWishlisted((w) => !w);
+            {/* ── RED ACCENT DOT (top-right corner) ── */}
+            <div
+              className="pc-dot-blink"
+              style={{
+                position: "absolute",
+                top: "15px",
+                right: "15px",
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle, #E05A35 0%, #C04422 100%)",
+                boxShadow: "0 0 7px rgba(192,68,34,0.55)",
               }}
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#28221D] shadow-sm transition-transform hover:scale-105"
-            >
-              <Heart
-                size={16}
-                className={wishlisted ? "fill-[#C04422] text-[#C04422]" : "text-[#28221D]"}
-              />
-            </button>
+            />
+            {/* ── SMALL GREEN DOT (bottom-right) ── */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "14px",
+                right: "18px",
+                width: "5px",
+                height: "5px",
+                borderRadius: "50%",
+                background: "#315E42",
+                opacity: 0.55,
+              }}
+            />
           </div>
         </Link>
 
         {/* ============================================================
-            CONTENT ZONE
+            PRODUCT CONTENT
             ============================================================ */}
-        <div className="flex flex-1 flex-col p-5">
-          <Link to={productUrl} className="no-underline">
-            <h3 className="mb-1 text-[17px] font-bold leading-snug text-[#28221D] transition-colors group-hover:text-[#315E42]">
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            padding: "22px 24px 24px",
+          }}
+        >
+          {/* JACRAL OATS label — red line + text */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "8px",
+            }}
+          >
+            <span
+              style={{
+                width: "22px",
+                height: "2px",
+                background: "linear-gradient(90deg, #C04422, #E05A35)",
+                borderRadius: "2px",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: "8px",
+                fontWeight: 900,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "#C04422",
+              }}
+            >
+              JACRAL OATS
+            </span>
+          </div>
+
+          {/* Product name — large, bold, uppercase */}
+          <Link to={productUrl} style={{ textDecoration: "none" }}>
+            <h3
+              style={{
+                fontSize: "clamp(21px, 2.4vw, 27px)",
+                fontWeight: 900,
+                textTransform: "uppercase",
+                letterSpacing: "-0.04em",
+                lineHeight: 1.1,
+                color: "#28221D",
+                marginBottom: "10px",
+                transition: "color 0.3s ease",
+              }}
+              className="group-hover:!text-[#315E42]"
+            >
               {product.name}
             </h3>
           </Link>
 
-          <p className="mb-3 line-clamp-1 text-[13px] text-[#847A70]">
+          {/* Description */}
+          <p
+            style={{
+              fontSize: "13px",
+              lineHeight: 1.65,
+              color: "#74695F",
+              minHeight: "44px",
+              flex: 1,
+            }}
+          >
             {product.description}
           </p>
 
-          {/* Meta row — rating + shipping, matches reference layout */}
-          <div className="mb-3 flex items-center gap-3 text-[13px] text-[#4D7A52]">
-            <span className="flex items-center gap-1 font-semibold text-[#28221D]">
-              <Star size={14} className="fill-[#E5A832] text-[#E5A832]" />
-              4.5
-            </span>
-            <span className="text-[#D8CDBA]">•</span>
-            <span className="flex items-center gap-1">
-              <Truck size={14} />
-              Fast shipping
-            </span>
-          </div>
+          {/* ── GRADIENT DIVIDER ── */}
+          <div
+            style={{
+              height: "1px",
+              background:
+                "linear-gradient(90deg, transparent, #D5C4A8 30%, #C4B090 60%, transparent)",
+              margin: "18px 0 16px",
+            }}
+          />
 
-          {/* Price row */}
-          <div className="mt-auto flex items-center justify-between pt-1">
-            <div className="flex items-baseline gap-2">
-              {hasDiscount && (
-                <span className="text-[13px] text-[#B4A99B] line-through">
-                  ₹{price}
-                </span>
-              )}
-              <span className="text-[19px] font-extrabold text-[#28221D]">
-                ₹{hasDiscount ? discountPrice : price}
-              </span>
-            </div>
+          {/* ── ACTION BUTTONS ── */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "10px",
+            }}
+          >
+            {/* DETAILS */}
+            <Link
+              to={productUrl}
+              className="group/details flex items-center justify-center gap-1.5"
+              style={{
+                minHeight: "48px",
+                borderRadius: "999px",
+                border: "1.5px solid #302923",
+                background: "transparent",
+                fontSize: "9px",
+                fontWeight: 900,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "#302923",
+                transition: "all 0.3s ease",
+                textDecoration: "none",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget;
+                el.style.background = "#302923";
+                el.style.color = "#fff";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget;
+                el.style.background = "transparent";
+                el.style.color = "#302923";
+              }}
+            >
+              DETAILS
+              <ArrowRight
+                size={13}
+                style={{ transition: "transform 0.3s ease" }}
+                className="group-hover/details:translate-x-0.5"
+              />
+            </Link>
 
+            {/* SHOP NOW */}
             <button
               type="button"
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              aria-label={isOutOfStock ? "Out of stock" : "Add to cart"}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform disabled:cursor-not-allowed disabled:opacity-40"
               style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "7px",
+                minHeight: "48px",
+                borderRadius: "999px",
                 background: isOutOfStock
                   ? "#D1C7BA"
-                  : "linear-gradient(135deg, #E88D36 0%, #C96A1F 100%)",
+                  : "linear-gradient(135deg, #285B3C 0%, #1E482E 100%)",
+                fontSize: "9px",
+                fontWeight: 900,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "#fff",
                 boxShadow: isOutOfStock
                   ? "none"
-                  : "0 8px 18px rgba(200,100,20,0.32)",
+                  : "0 8px 22px rgba(40,91,60,0.28), 0 2px 6px rgba(40,91,60,0.16)",
+                transition: "all 0.3s ease",
+                cursor: isOutOfStock ? "not-allowed" : "pointer",
+                border: "none",
               }}
               onMouseEnter={(e) => {
-                if (!isOutOfStock) e.currentTarget.style.transform = "translateY(-2px)";
+                if (isOutOfStock) return;
+                const el = e.currentTarget;
+                el.style.background =
+                  "linear-gradient(135deg, #3D7050 0%, #2A5639 100%)";
+                el.style.boxShadow =
+                  "0 13px 30px rgba(40,91,60,0.38), 0 4px 10px rgba(40,91,60,0.22)";
+                el.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "none";
+                if (isOutOfStock) return;
+                const el = e.currentTarget;
+                el.style.background =
+                  "linear-gradient(135deg, #285B3C 0%, #1E482E 100%)";
+                el.style.boxShadow =
+                  "0 8px 22px rgba(40,91,60,0.28), 0 2px 6px rgba(40,91,60,0.16)";
+                el.style.transform = "none";
               }}
             >
-              <ShoppingBag size={16} />
+              <ShoppingBag size={13} strokeWidth={1.8} />
+              {isOutOfStock ? "OUT OF STOCK" : "SHOP NOW"}
             </button>
           </div>
 
+          {/* Out of stock notice */}
           {isOutOfStock && (
-            <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#A15E4B]">
+            <p
+              style={{
+                marginTop: "10px",
+                textAlign: "center",
+                fontSize: "8.5px",
+                fontWeight: 700,
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                color: "#A15E4B",
+              }}
+            >
               Currently unavailable
             </p>
           )}
         </div>
+
+        {/* ── BOTTOM EDGE TRICOLOR BAR ── */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: "12%",
+            right: "12%",
+            height: "3px",
+            background:
+              "linear-gradient(90deg, #8B4513 0%, #315E42 33%, #C04422 66%, #315E42 84%, #8B4513 100%)",
+            borderRadius: "0 0 4px 4px",
+            opacity: 0.5,
+          }}
+        />
       </article>
     </>
   );

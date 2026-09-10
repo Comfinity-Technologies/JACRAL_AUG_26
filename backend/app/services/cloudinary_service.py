@@ -13,11 +13,6 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Root of the /static mount (backend/static). All local-fallback URLs are built
-# relative to this so the returned URL always matches where the file was saved,
-# no matter how deeply nested local_fallback_dir is (e.g. static/uploads/content/how_to_use).
-STATIC_ROOT = Path(__file__).resolve().parents[2] / "static"
-
 # Check if Cloudinary is configured
 _cloudinary_initialized = False
 
@@ -84,7 +79,7 @@ def upload_image_to_storage(
 
     # 2. Fallback to local static storage
     if local_fallback_dir is None:
-        local_fallback_dir = STATIC_ROOT / folder
+        local_fallback_dir = Path(__file__).resolve().parents[2] / "static" / folder
     local_fallback_dir.mkdir(parents=True, exist_ok=True)
 
     unique_filename = f"{uuid.uuid4().hex[:10]}.{ext}"
@@ -92,19 +87,4 @@ def upload_image_to_storage(
     with open(dest, "wb") as f:
         f.write(file_bytes)
 
-    # BUG FIX: previously this returned f"/static/{folder}/{unique_filename}",
-    # which only matched the real save location when local_fallback_dir was
-    # exactly STATIC_ROOT/folder (one level deep, e.g. "products"). For nested
-    # dirs like static/uploads/content/how_to_use, that produced a broken URL
-    # (/static/how_to_use/...) pointing at a path the file was never written
-    # to, so uploaded step/slide/brand images 404'd after upload.
-    # Build the URL from local_fallback_dir's actual position under STATIC_ROOT.
-    try:
-        rel_dir = local_fallback_dir.resolve().relative_to(STATIC_ROOT)
-        url_dir = rel_dir.as_posix()
-    except ValueError:
-        # local_fallback_dir isn't under STATIC_ROOT (unexpected) — fall back
-        # to the folder label rather than crashing.
-        url_dir = folder
-
-    return f"/static/{url_dir}/{unique_filename}"
+    return f"/static/{folder}/{unique_filename}"

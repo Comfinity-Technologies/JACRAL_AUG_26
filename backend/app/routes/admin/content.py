@@ -652,33 +652,10 @@ async def upload_how_to_use_step_image(
     section.is_published = False
     section.updated_by = admin.id
 
-    # Also update (or create) the persistent HowToUseStep model record
+    # Also update the persistent HowToUseStep model record if present
     step_record = db.query(HowToUseStep).filter(HowToUseStep.step_number == step_number).first()
     if step_record:
         step_record.image_url = rel_url
-    else:
-        # Create a default step record so the image shows on the frontend
-        default_titles = {
-            1: "Pour Cereal",
-            2: "Add Milk or Plant Milk",
-            3: "Top & Customize",
-            4: "Savor & Energize",
-        }
-        default_descs = {
-            1: "Add 40–50g of Jacral Jackfruit Cereal into your breakfast bowl.",
-            2: "Pour warm or chilled milk, almond milk, or oat milk over the cereal.",
-            3: "Add your favorite fresh berries, nuts, seeds, or a drizzle of raw honey.",
-            4: "Enjoy crisp texture and clean, steady energy that powers your day.",
-        }
-        step_record = HowToUseStep(
-            step_number=step_number,
-            title=default_titles.get(step_number, f"Step {step_number}"),
-            description=default_descs.get(step_number, ""),
-            image_url=rel_url,
-            sort_order=step_number,
-            is_active=True,
-        )
-        db.add(step_record)
 
     db.commit()
     audit_service.log_action(

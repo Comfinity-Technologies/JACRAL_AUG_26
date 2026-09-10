@@ -1,8 +1,8 @@
 import LandingNavbar from "./LandingNavbar";
 import HeroSlider from "./HeroSlider";
 import ProductsSection from "./ProductsSection";
-import RibbonDivider from "./RibbonDivider";
 import HowToUseSection from "./HowToUseSection";
+import CouponPromoSection from "./CouponPromoSection";
 import ReviewsSection from "./ReviewsSection";
 import Footer from "../customer/Footer";
 import { useLandingPage } from "../../hooks/useLandingPage";
@@ -29,16 +29,16 @@ export default function LandingPage({ showNavFooter = false }: LandingPageProps)
       {/* ── 2. HERO SLIDER ── */}
       <HeroSlider slides={slides} />
 
-      {/* ── 3. PRODUCTS SECTION (BENEFITS BAR + 2 FEATURED CARDS + COUPON + CHARACTER & BOARD) ── */}
-      <ProductsSection />
+      {/* ── 3. PRODUCTS SECTION (GREEN STRIP + 2 EQUAL FEATURED CARDS) ── */}
+      <ProductsSection section={sections["products_section"]} />
 
-      {/* ── 4. 3D RIBBON — CARRIES THE EYE INTO HOW TO ENJOY ── */}
-      <RibbonDivider />
-
-      {/* ── 5. HOW TO ENJOY (4 ADMIN-MANAGED STEPS) ── */}
+      {/* ── 4. HOW TO USE (4 ADMIN-MANAGED STEPS) ── */}
       <HowToUseSection section={howSec} />
 
-      {/* ── 6. CUSTOMER REVIEWS (with red ribbon + hanging animated cards) ── */}
+      {/* ── 5. COUPON PROMO STRIP ── */}
+      <CouponPromoSection />
+
+      {/* ── 6. CUSTOMER REVIEWS (TESTIMONIAL CAROUSEL / CARDS) ── */}
       <ReviewsSection
         title="CUSTOMER REVIEWS"
         subtitle="REAL EXPERIENCES · REAL NUTRITION"
@@ -50,3 +50,4 @@ export default function LandingPage({ showNavFooter = false }: LandingPageProps)
     </div>
   );
 }
+

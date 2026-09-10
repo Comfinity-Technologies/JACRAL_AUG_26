@@ -28,7 +28,6 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 import AdminMFASetupPage from "./pages/admin/AdminMFASetupPage";
 import AdminLandingPageCMS from "./pages/admin/AdminLandingPageCMS";
-import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
 
 const router = createBrowserRouter([
   // Customer routes
@@ -63,7 +62,6 @@ const router = createBrowserRouter([
       { path: "analytics", element: <AdminAnalyticsPage /> },
       { path: "users", element: <AdminUsersPage /> },
       { path: "coupons", element: <AdminCouponsPage /> },
-      { path: "reviews", element: <AdminReviewsPage /> },
       { path: "content/landing-page", element: <AdminLandingPageCMS /> },
       { path: "settings", element: <AdminMFASetupPage /> },
     ],
